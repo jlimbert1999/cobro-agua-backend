@@ -17,7 +17,7 @@ export class ReadingService {
     const consumptionDate = new Date(reading.consumptionDate);
     const year = consumptionDate.getFullYear();
     const month = consumptionDate.getMonth();
-    const payment = this._calculatePayment(reading.consume);
+    const payment = await this._calculatePayment(reading.consume);
     const lastRecord = await this.readingModel.findOne({
       consumptionDate: {
         $gte: new Date(year, month, 1),
@@ -42,6 +42,11 @@ export class ReadingService {
   async getLastConsumptionRecord(id_client: string) {
     return await this.readingModel
       .findOne({ client: id_client })
+      .sort({ consumptionDate: -1 });
+  }
+  async getDebts(id_client: string) {
+    return await this.readingModel
+      .find({ client: id_client, isPaid: false })
       .sort({ consumptionDate: -1 });
   }
 

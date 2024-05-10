@@ -1,6 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
+export enum ClientStatus {
+  ENABLED = 'enabled',
+  DISABLED = 'disabled',
+}
+
 export type ClientDocument = HydratedDocument<Client>;
 
 @Schema()
@@ -43,6 +48,13 @@ export class Client {
     type: String,
   })
   address: string;
+
+  @Prop({
+    required: true,
+    enum: Object.values(ClientStatus),
+    default: ClientStatus.ENABLED,
+  })
+  status: ClientStatus;
 }
 
 export const ClientSchema = SchemaFactory.createForClass(Client);

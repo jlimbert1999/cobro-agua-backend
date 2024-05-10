@@ -15,7 +15,7 @@ import {
   ReadingController,
   ConfigController,
 } from './controllers';
-import { ClientService, ConfigService } from './services';
+import { ClientService, ConfigService, ReadingService } from './services';
 
 @Module({
   controllers: [
@@ -24,7 +24,7 @@ import { ClientService, ConfigService } from './services';
     ReadingController,
     ConfigController,
   ],
-  providers: [ConsumerService, ClientService, ConfigService],
+  providers: [ConsumerService, ClientService, ConfigService, ReadingService],
   imports: [
     MongooseModule.forFeature([
       { name: Client.name, schema: ClientSchema },

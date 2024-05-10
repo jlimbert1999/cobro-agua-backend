@@ -2,7 +2,7 @@ import { IsNumber } from 'class-validator';
 
 export class ConfigDto {
   @IsNumber()
-  pricePerUnit: number;
+  basePrice: number;
 
   @IsNumber()
   maxUnits: number;

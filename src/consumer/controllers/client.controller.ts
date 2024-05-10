@@ -1,14 +1,23 @@
-import { Controller, Post, Body, Patch, Get, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Patch,
+  Get,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { ClientService } from '../services';
 import { CreateClientDto, UpdateClientDto } from '../dto';
+import { PaginationParamsDto } from 'src/common/dtos';
 
 @Controller('clients')
 export class ClientController {
   constructor(private clientService: ClientService) {}
 
   @Get()
-  findAll() {
-    return this.clientService.findAll();
+  findAll(@Query() params: PaginationParamsDto) {
+    return this.clientService.findAll(params.limit, params.offset);
   }
 
   @Post()
