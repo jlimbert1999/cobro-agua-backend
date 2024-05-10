@@ -27,10 +27,10 @@ export class Client {
 
   @Prop({
     required: true,
-    type: Number,
+    type: String,
     unique: true,
   })
-  dni: number;
+  dni: string;
 
   @Prop({
     required: true,

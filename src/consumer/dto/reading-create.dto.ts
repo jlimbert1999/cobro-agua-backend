@@ -2,7 +2,7 @@ import { IsDateString, IsMongoId, IsNumber, Min } from 'class-validator';
 
 export class CreateReadingDto {
   @IsMongoId()
-  action: string;
+  client: string;
 
   @IsNumber()
   @Min(0)

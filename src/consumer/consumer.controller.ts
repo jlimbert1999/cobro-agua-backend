@@ -11,10 +11,6 @@ export class ConsumerController {
     return this.consumerService.createReading(reading);
   }
 
-  @Get('actions/search/:text')
-  searchAvailableActions(@Param('text') text: string) {
-    return this.consumerService.searchAvailableActions(text);
-  }
 
   @Get('clients')
   getClients() {

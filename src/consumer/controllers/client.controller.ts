@@ -1,6 +1,6 @@
-import { Controller, Post, Body, Patch, Get } from '@nestjs/common';
+import { Controller, Post, Body, Patch, Get, Param } from '@nestjs/common';
 import { ClientService } from '../services';
-import { CreateClientDto } from '../dto';
+import { CreateClientDto, UpdateClientDto } from '../dto';
 
 @Controller('clients')
 export class ClientController {
@@ -12,12 +12,12 @@ export class ClientController {
   }
 
   @Post()
-  create(@Body() action: CreateClientDto) {
-    return this.clientService.create(action);
+  create(@Body() client: CreateClientDto) {
+    return this.clientService.create(client);
   }
 
-  @Patch()
-  update(@Body() action: CreateClientDto) {
-    return this.clientService.create(action);
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() client: UpdateClientDto) {
+    return this.clientService.update(id, client);
   }
 }

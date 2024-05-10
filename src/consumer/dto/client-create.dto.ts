@@ -1,10 +1,4 @@
-import {
-  ArrayMaxSize,
-  IsMongoId,
-  IsNotEmpty,
-  IsNumber,
-  IsString,
-} from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateClientDto {
   @IsString()
@@ -18,13 +12,14 @@ export class CreateClientDto {
   @IsString()
   middlename: string;
 
-  @IsNumber()
-  dni: number;
+  @IsString()
+  @IsNotEmpty()
+  dni: string;
 
   @IsNumber()
   phone: number;
 
-  @IsMongoId({ each: true })
-  @ArrayMaxSize(3)
-  actions: string[];
+  @IsString()
+  @IsNotEmpty()
+  address: string;
 }

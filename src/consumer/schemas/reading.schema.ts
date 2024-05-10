@@ -19,13 +19,17 @@ export class Reading {
   })
   consume: number;
 
-
   @Prop({
     type: Date,
     required: true,
-    default: Date.now,
   })
   consumptionDate: Date;
+
+  @Prop({
+    type: Number,
+    required: true,
+  })
+  amountToPay: number;
 
   @Prop({
     type: Boolean,

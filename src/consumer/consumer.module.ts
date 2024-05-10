@@ -3,26 +3,33 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConsumerService } from './consumer.service';
 import { ConsumerController } from './consumer.controller';
 import {
-  Action,
-  ActionSchema,
   Client,
   ClientSchema,
+  Config,
+  ConfigSchema,
   Reading,
   ReadingSchema,
 } from './schemas';
-import { ActionService } from './services/action.service';
-import { ActionController } from './controllers/action.controller';
-import { ClientController } from './controllers/client.controller';
-import { ClientService } from './services';
+import {
+  ClientController,
+  ReadingController,
+  ConfigController,
+} from './controllers';
+import { ClientService, ConfigService } from './services';
 
 @Module({
-  controllers: [ConsumerController, ActionController, ClientController],
-  providers: [ConsumerService, ActionService, ClientService],
+  controllers: [
+    ConsumerController,
+    ClientController,
+    ReadingController,
+    ConfigController,
+  ],
+  providers: [ConsumerService, ClientService, ConfigService],
   imports: [
     MongooseModule.forFeature([
-      { name: Action.name, schema: ActionSchema },
       { name: Client.name, schema: ClientSchema },
       { name: Reading.name, schema: ReadingSchema },
+      { name: Config.name, schema: ConfigSchema },
     ]),
   ],
 })

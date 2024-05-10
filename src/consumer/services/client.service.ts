@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model } from 'mongoose';
 import { Client } from '../schemas';
-import { CreateClientDto } from '../dto';
+import { CreateClientDto, UpdateClientDto } from '../dto';
 
 @Injectable()
 export class ClientService {
@@ -12,7 +12,7 @@ export class ClientService {
   ) {}
 
   async findAll() {
-    return await this.clientModel.find({}).populate('actions');
+    return await this.clientModel.find({});
   }
 
   async create(client: CreateClientDto) {
@@ -21,8 +21,14 @@ export class ClientService {
       throw new BadRequestException(`El DNI: ${client.dni} ya existe.`);
     }
     const model = new this.clientModel(client);
-    const createdClient = await model.save();
-    await createdClient.populate('actions');
-    return createdClient;
+    return await model.save();
+  }
+
+  async update(id: string, client: UpdateClientDto) {
+    const clientDB = await this.clientModel.findOne({ dni: client.dni });
+    if (clientDB) {
+      throw new BadRequestException(`El DNI: ${client.dni} ya existe.`);
+    }
+    return await this.clientModel.findByIdAndUpdate(id, client);
   }
 }

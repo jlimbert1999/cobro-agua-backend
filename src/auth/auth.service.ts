@@ -1,17 +1,15 @@
-import {
-  Injectable,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
 
-import { AuthDto } from './dto/auth.dto';
 import { UpdateMyAccountDto } from './dto/my-account.dto';
 import { SystemMenu } from './constants/system-menu';
-import { EnvConfig, JwtPayload } from './interfaces';
+import { JwtPayload } from './interfaces';
 import { User } from './schemas/user.schema';
+import { EnvConfig } from 'src/config/env.configuration';
 
 @Injectable()
 export class AuthService {
@@ -127,7 +125,6 @@ export class AuthService {
     return this.jwtService.sign(payload);
   }
   generateToken(account: User) {
-
     // const { funcionario, dependencia } = account;
     // const payload: JwtPayload = {
     //   id_account: account._id,
