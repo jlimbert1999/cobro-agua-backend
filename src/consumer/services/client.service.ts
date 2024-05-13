@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Connection, Model } from 'mongoose';
+import { Connection, FilterQuery, Model } from 'mongoose';
 import { Client } from '../schemas';
 import { CreateClientDto, UpdateClientDto } from '../dto';
 
@@ -20,6 +20,38 @@ export class ClientService {
       this.clientModel.find().skip(offset).limit(limit).sort({ _id: -1 }),
       this.clientModel.countDocuments(),
     ]);
+    return { clients, length };
+  }
+
+  async search(term: string, limit: number, offset: number) {
+    const regex = RegExp(term, 'i');
+    const query: FilterQuery<Client> = {
+      $or: [{ fullname: regex }, { dni: regex }],
+    };
+    const [data] = await this.clientModel
+      .aggregate()
+      .addFields({
+        fullname: {
+          $concat: [
+            '$firstname',
+            ' ',
+            '$middlename',
+            ' ',
+            { $ifNull: ['$lastname', ''] },
+          ],
+        },
+      })
+      .match(query)
+      .facet({
+        paginatedResults: [{ $skip: offset }, { $limit: limit }],
+        totalCount: [
+          {
+            $count: 'count',
+          },
+        ],
+      });
+    const clients = data.paginatedResults;
+    const length = data.totalCount[0] ? data.totalCount[0].count : 0;
     return { clients, length };
   }
 

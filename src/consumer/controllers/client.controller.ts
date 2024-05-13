@@ -20,6 +20,11 @@ export class ClientController {
     return this.clientService.findAll(params.limit, params.offset);
   }
 
+  @Get('search/:term')
+  search(@Param('term') term: string, @Query() params: PaginationParamsDto) {
+    return this.clientService.search(term, params.limit, params.offset);
+  }
+
   @Post()
   create(@Body() client: CreateClientDto) {
     return this.clientService.create(client);
