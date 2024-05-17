@@ -6,12 +6,14 @@ import { ConsumerModule } from './consumer/consumer.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { EnvConfiguration } from './config/env.configuration';
+import { UserModule } from './users/user.module';
 
 @Module({
   controllers: [AppController],
   providers: [AppService],
   imports: [
     AuthModule,
+    UserModule,
     ConsumerModule,
     ConfigModule.forRoot({
       load: [EnvConfiguration],

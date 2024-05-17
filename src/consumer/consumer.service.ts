@@ -1,16 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Client, Reading } from './schemas';
+import { Customer, Reading } from './schemas';
 import { CreateReadingDto } from './dto';
 
 @Injectable()
 export class ConsumerService {
   constructor(
-    @InjectModel(Client.name) private clientModel: Model<Client>,
+    @InjectModel(Customer.name) private clientModel: Model<Customer>,
     @InjectModel(Reading.name) private readingModel: Model<Reading>,
   ) {}
-
 
   async createReading(reading: CreateReadingDto): Promise<{ message: string }> {
     const consumptionDate = new Date(reading.consumptionDate);

@@ -1,35 +1,21 @@
-import { Controller, Post, Body, Get, Param, Put } from '@nestjs/common';
+import { Controller, Post, Body, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
-import { Auth, GetUserRequest } from './decorators';
-import { UpdateMyAccountDto } from './dto/my-account.dto';
-import { User } from './schemas/user.schema';
+import { Public, UserRequest } from './decorators';
+import { User } from 'src/users/schemas/user.schema';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-  @Get()
-  @Auth()
-  verifyAuth(@GetUserRequest() account: User) {
-    return this.authService.checkAuthStatus(account._id);
-  }
+
+  @Public()
   @Post()
-  login(@Body() body: AuthDto) {
-    return this.authService.login(body);
+  login(@Body() authDto: AuthDto) {
+    return this.authService.login(authDto);
   }
 
-  @Get('/:id_account')
-  @Auth()
-  getMyAuthDetails(@Param('id_account') id_account: string) {
-    return this.authService.getMyAuthDetails(id_account);
-  }
-
-  @Put('/:id_account')
-  @Auth()
-  updateMyAccount(
-    @Param('id_account') id_account: string,
-    @Body() data: UpdateMyAccountDto,
-  ) {
-    return this.authService.updateMyAccount(id_account, data);
+  @Get()
+  checkAuth(@UserRequest() user: User) {
+    return this.authService.checkAuthStatus(user.id);
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Client, Reading } from '../schemas';
+import { Customer, Reading } from '../schemas';
 import { Model } from 'mongoose';
 import { CreateReadingDto } from '../dto';
 import { ConfigService } from './config.service';
@@ -8,7 +8,7 @@ import { ConfigService } from './config.service';
 @Injectable()
 export class ReadingService {
   constructor(
-    @InjectModel(Client.name) private clientModel: Model<Client>,
+    @InjectModel(Customer.name) private clientModel: Model<Customer>,
     @InjectModel(Reading.name) private readingModel: Model<Reading>,
     private configService: ConfigService,
   ) {}

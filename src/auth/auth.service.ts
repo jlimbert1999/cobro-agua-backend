@@ -1,169 +1,46 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { InjectModel } from '@nestjs/mongoose';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
+import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-
-import { UpdateMyAccountDto } from './dto/my-account.dto';
-import { SystemMenu } from './constants/system-menu';
-import { JwtPayload } from './interfaces';
-import { User } from './schemas/user.schema';
-import { EnvConfig } from 'src/config/env.configuration';
+import * as bcrypt from 'bcrypt';
+import { User } from 'src/users/schemas/user.schema';
+import { AuthDto } from './dto/auth.dto';
+import { JwtPayload } from './interfaces/jwt.interface';
 
 @Injectable()
 export class AuthService {
   constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
     private jwtService: JwtService,
-    private configService: ConfigService<EnvConfig>,
-    @InjectModel(User.name) private accountModel: Model<User>,
   ) {}
 
-  async login(data: any) {
-    // const account = await this.accountModel.findOne({ login }).populate({
-    //   path: 'funcionario',
-    //   populate: {
-    //     path: 'cargo',
-    //   },
-    // });
-    // if (!account) throw new BadRequestException('login o password incorrectos');
-    // if (!bcrypt.compareSync(password, account.password))
-    //   throw new BadRequestException('login o password incorrectos');
-    // if (String(account._id) === this.configService.getOrThrow('id_root')) {
-    //   return { token: this.generateRootToken(account) };
-    // }
-    // if (!account.funcionario || !account.activo)
-    //   throw new BadRequestException('La cuenta ha sido desahabilidata');
-    // return { token: this.generateToken(account) };
+  async login({ login, password }: AuthDto) {
+    const userDB = await this.userModel.findOne({ login });
+    if (!userDB)
+      throw new BadRequestException('Usuario o Contraseña incorrectos');
+    if (!bcrypt.compareSync(password, userDB.password)) {
+      throw new BadRequestException('Usuario o Contraseña incorrectos');
+    }
+    return {
+      token: this._generateToken(userDB),
+    };
   }
 
-  async checkAuthStatus(id_account: string) {
-    // const account = await this.accountModel
-    //   .findById(id_account)
-    //   .populate({
-    //     path: 'funcionario',
-    //     populate: {
-    //       path: 'cargo',
-    //     },
-    //   })
-    //   .populate('rol');
-    // if (!account) throw new UnauthorizedException();
-    // const resources = account.rol.permissions.map(
-    //   (privilege) => privilege.resource,
-    // );
-    // if (resources.length === 0) throw new UnauthorizedException();
-    // if (String(account._id) === this.configService.getOrThrow('id_root')) {
-    //   return {
-    //     token: this.generateRootToken(account),
-    //     menu: this.getSystemMenu(resources),
-    //   };
-    // }
-    // if (!account.funcionario || !account.activo)
-    //   throw new BadRequestException('La cuenta ha sido desahanilidata');
-    // return {
-    //   token: this.generateToken(account),
-    //   menu: this.getSystemMenu(resources),
-    // };
+  async checkAuthStatus(id_user: number) {
+    const userDB = await this.userModel.findById(id_user);
+    if (!userDB) throw new UnauthorizedException();
+    return { token: this._generateToken(userDB) };
   }
 
-  async getMyAuthDetails(id_account: string) {
-    return await this.accountModel
-      .findById(id_account)
-      .populate({
-        path: 'funcionario',
-        populate: {
-          path: 'cargo',
-        },
-      })
-      .populate({
-        path: 'dependencia',
-        select: 'nombre codigo',
-        populate: {
-          path: 'institucion',
-          select: 'nombre',
-        },
-      })
-      .select('-password -rol');
-  }
-
-  async updateMyAccount(id_account: string, data: UpdateMyAccountDto) {
-    const { password } = data;
-    const salt = bcrypt.genSaltSync();
-    const encryptedPassword = bcrypt.hashSync(password.toString(), salt);
-    return await this.accountModel
-      .findByIdAndUpdate(
-        id_account,
-        { password: encryptedPassword },
-        { new: true },
-      )
-      .populate({
-        path: 'funcionario',
-        populate: {
-          path: 'cargo',
-        },
-      })
-      .populate({
-        path: 'dependencia',
-        select: 'nombre codigo',
-        populate: {
-          path: 'institucion',
-          select: 'nombre',
-        },
-      })
-      .select('-password -rol');
-  }
-
-  generateRootToken(account: User): string {
+  private _generateToken(user: User): string {
     const payload: JwtPayload = {
-      id_account: account._id,
-      id_dependency: '',
-      officer: {
-        fullname: 'ADMINISTRADOR',
-        jobtitle: 'Configuraciones',
-      },
+      id_user: user.id,
+      fullname: user.fullname,
     };
     return this.jwtService.sign(payload);
-  }
-  generateToken(account: User) {
-    // const { funcionario, dependencia } = account;
-    // const payload: JwtPayload = {
-    //   id_account: account._id,
-    //   id_dependency: dependencia._id,
-    //   officer: {
-    //     fullname: [funcionario.nombre, funcionario.paterno, funcionario.materno]
-    //       .filter(Boolean)
-    //       .join(' '),
-    //     jobtitle: funcionario.cargo ? funcionario.cargo.nombre : '',
-    //   },
-    // };
-    // return this.jwtService.sign(payload);
-  }
-
-  getSystemMenu(resources: string[]) {
-    const allowedResources = SystemMenu.filter((menuItem) =>
-      resources.includes(menuItem.resource),
-    );
-    const groupedMenu = allowedResources.reduce((result, menuItem) => {
-      if (!menuItem.group) {
-        const category = menuItem.routerLink;
-        result[category] = menuItem;
-      } else {
-        const { text, icon } = menuItem.group;
-        if (!result[text]) {
-          result[text] = {
-            text: text,
-            icon,
-            children: [],
-          };
-        }
-        result[text].children.push({
-          text: menuItem.text,
-          icon: menuItem.icon,
-          routerLink: menuItem.routerLink,
-        });
-      }
-      return result;
-    }, {});
-    return Object.values(groupedMenu);
   }
 }

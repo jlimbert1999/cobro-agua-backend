@@ -5,13 +5,13 @@ import {
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, FilterQuery, Model } from 'mongoose';
-import { Client } from '../schemas';
+import { Customer } from '../schemas';
 import { CreateClientDto, UpdateClientDto } from '../dto';
 
 @Injectable()
 export class ClientService {
   constructor(
-    @InjectModel(Client.name) private clientModel: Model<Client>,
+    @InjectModel(Customer.name) private clientModel: Model<Customer>,
     @InjectConnection() private connection: Connection,
   ) {}
 
@@ -25,7 +25,7 @@ export class ClientService {
 
   async search(term: string, limit: number, offset: number) {
     const regex = RegExp(term, 'i');
-    const query: FilterQuery<Client> = {
+    const query: FilterQuery<Customer> = {
       $or: [{ fullname: regex }, { dni: regex }],
     };
     const [data] = await this.clientModel

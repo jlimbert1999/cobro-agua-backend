@@ -6,10 +6,10 @@ export enum ClientStatus {
   DISABLED = 'disabled',
 }
 
-export type ClientDocument = HydratedDocument<Client>;
+export type ClientDocument = HydratedDocument<Customer>;
 
 @Schema()
-export class Client {
+export class Customer {
   @Prop({
     required: true,
     type: String,
@@ -57,4 +57,4 @@ export class Client {
   status: ClientStatus;
 }
 
-export const ClientSchema = SchemaFactory.createForClass(Client);
+export const CustomertSchema = SchemaFactory.createForClass(Customer);
