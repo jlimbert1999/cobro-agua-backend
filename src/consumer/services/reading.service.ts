@@ -1,60 +1,70 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Customer, Reading } from '../schemas';
-import { Model } from 'mongoose';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Customer, MeterReading } from '../schemas';
+import { Connection, FilterQuery, Model } from 'mongoose';
 import { CreateReadingDto } from '../dto';
-import { ConfigService } from './config.service';
+import { InvoiceService } from './invoice.service';
 
 @Injectable()
 export class ReadingService {
   constructor(
+    @InjectConnection() private connection: Connection,
     @InjectModel(Customer.name) private clientModel: Model<Customer>,
-    @InjectModel(Reading.name) private readingModel: Model<Reading>,
-    private configService: ConfigService,
+    @InjectModel(MeterReading.name) private readingModel: Model<MeterReading>,
+    private invoiceService: InvoiceService,
   ) {}
 
-  async create(reading: CreateReadingDto): Promise<{ message: string }> {
-    const consumptionDate = new Date(reading.consumptionDate);
-    const year = consumptionDate.getFullYear();
-    const month = consumptionDate.getMonth();
-    const payment = await this._calculatePayment(reading.consume);
-    const lastRecord = await this.readingModel.findOne({
-      consumptionDate: {
-        $gte: new Date(year, month, 1),
-        $lt: new Date(year, month + 1, 1),
-      },
-    });
-    if (lastRecord) {
-      await this.readingModel.updateOne(
-        { _id: lastRecord._id },
-        { consume: reading.consume, amountToPay: payment },
-      );
-      return { message: 'Lectura actualizada.' };
+  async create(readingDto: CreateReadingDto) {
+    const { client, reading } = readingDto;
+    const date = new Date();
+    await this._checkDuplicate(date);
+    const session = await this.connection.startSession();
+    try {
+      session.startTransaction();
+      const props = await this._calculateConsumption(client, reading);
+      const createMeterReading = new this.readingModel({
+        reading_date: date,
+        client: client,
+        previous_reading: props.previous_reading,
+        current_reading: props.current_reading,
+        consumption: props.consumption,
+      });
+      await createMeterReading.save({ session });
+      await this.invoiceService.generateConsumptionInvoice(client, props.consumption, session);
+      await session.commitTransaction();
+      return { message: 'Lectura creada' };
+    } catch (error) {
+      console.log(error);
+      await session.abortTransaction();
+      throw new InternalServerErrorException('Error al registrar el lectura');
+    } finally {
+      session.endSession();
     }
-    const createdReading = new this.readingModel({
-      ...reading,
-      amountToPay: payment,
-    });
-    await createdReading.save();
-    return { message: 'Lectura creada.' };
   }
 
-  async getLastConsumptionRecord(id_client: string) {
-    return await this.readingModel
-      .findOne({ client: id_client })
-      .sort({ consumptionDate: -1 });
+  async getPreviusReading(id_client: string) {
+    return await this.readingModel.findOne({ client: id_client }).sort({ reading_date: -1 });
   }
+
   async getDebts(id_client: string) {
-    return await this.readingModel
-      .find({ client: id_client, isPaid: false })
-      .sort({ consumptionDate: -1 });
+    return await this.readingModel.findOne({ client: id_client });
   }
 
-  private async _calculatePayment(consume: number): Promise<number> {
-    const { maxUnits, basePrice, pricePerExcessUnit } =
-      await this.configService.getSettings();
-    if (consume < maxUnits) return basePrice;
-    const additionalPayent = (consume - maxUnits) * pricePerExcessUnit;
-    return basePrice + additionalPayent;
+  private async _checkDuplicate(date: Date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const query: FilterQuery<MeterReading> = {
+      reading_date: { $gte: new Date(year, month, 1), $lt: new Date(year, month + 1, 1) },
+    };
+    const duplicate = await this.readingModel.findOne(query);
+    if (duplicate) throw new BadRequestException('Ya existe una lectura para la fecha proporcionada');
+  }
+
+  private async _calculateConsumption(id_client: string, current_reading: number) {
+    const previousRecord = await this.getPreviusReading(id_client);
+    const previous_reading = previousRecord ? previousRecord.current_reading : 0;
+    const consumption = current_reading - previous_reading;
+    if (consumption <= 0) throw new BadRequestException('Registro invalido');
+    return { previous_reading, current_reading, consumption };
   }
 }

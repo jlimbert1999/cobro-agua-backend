@@ -7,29 +7,26 @@ import {
   CustomertSchema,
   Config,
   ConfigSchema,
-  Reading,
-  ReadingSchema,
+  MeterReading,
+  MeterReadingSchema,
+  InvoiceSchema,
+  Invoice,
+  PaymentSchema,
+  Payment,
 } from './schemas';
-import {
-  ClientController,
-  ReadingController,
-  ConfigController,
-} from './controllers';
-import { ClientService, ConfigService, ReadingService } from './services';
+import { ClientController, ReadingController, ConfigController } from './controllers';
+import { ClientService, ConfigService, InvoiceService, ReadingService } from './services';
 
 @Module({
-  controllers: [
-    ConsumerController,
-    ClientController,
-    ReadingController,
-    ConfigController,
-  ],
-  providers: [ConsumerService, ClientService, ConfigService, ReadingService],
+  controllers: [ConsumerController, ClientController, ReadingController, ConfigController],
+  providers: [ConsumerService, ClientService, ConfigService, ReadingService, InvoiceService],
   imports: [
     MongooseModule.forFeature([
+      { name: MeterReading.name, schema: MeterReadingSchema },
       { name: Customer.name, schema: CustomertSchema },
-      { name: Reading.name, schema: ReadingSchema },
       { name: Config.name, schema: ConfigSchema },
+      { name: Invoice.name, schema: InvoiceSchema },
+      { name: Payment.name, schema: PaymentSchema },
     ]),
   ],
 })

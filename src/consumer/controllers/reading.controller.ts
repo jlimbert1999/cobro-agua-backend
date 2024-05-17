@@ -5,9 +5,10 @@ import { CreateReadingDto } from '../dto';
 @Controller('readings')
 export class ReadingController {
   constructor(private readingService: ReadingService) {}
+  
   @Get('last/:id_client')
-  getLastReading(@Param('id_client') id_client: string) {
-    return this.readingService.getLastConsumptionRecord(id_client);
+  getPreviusReading(@Param('id_client') id_client: string) {
+    return this.readingService.getPreviusReading(id_client);
   }
 
   @Get('debts/:id_client')

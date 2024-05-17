@@ -1,33 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Customer, Reading } from './schemas';
+import { Customer, MeterReading } from './schemas';
 import { CreateReadingDto } from './dto';
 
 @Injectable()
 export class ConsumerService {
   constructor(
     @InjectModel(Customer.name) private clientModel: Model<Customer>,
-    @InjectModel(Reading.name) private readingModel: Model<Reading>,
+    @InjectModel(MeterReading.name) private readingModel: Model<MeterReading>,
   ) {}
 
-  async createReading(reading: CreateReadingDto): Promise<{ message: string }> {
-    const consumptionDate = new Date(reading.consumptionDate);
-    const year = consumptionDate.getFullYear();
-    const month = consumptionDate.getMonth();
-    const lastRecord = await this.readingModel.findOne({
-      consumptionDate: {
-        $gte: new Date(year, month, 1),
-        $lt: new Date(year, month + 1, 1),
-      },
-    });
-    if (lastRecord) {
-      await this.readingModel.updateOne({ _id: lastRecord._id }, reading);
-      return { message: 'Lectura actualizada.' };
-    }
-    const createdReading = new this.readingModel(reading);
-    await createdReading.save();
-    return { message: 'Lectura creada.' };
+  async createReading(reading: CreateReadingDto) {
+    // const consumptionDate = new Date(reading.reading_date);
+    // const year = consumptionDate.getFullYear();
+    // const month = consumptionDate.getMonth();
+    // const lastRecord = await this.readingModel.findOne({
+    //   consumptionDate: {
+    //     $gte: new Date(year, month, 1),
+    //     $lt: new Date(year, month + 1, 1),
+    //   },
+    // });
+    // if (lastRecord) {
+    //   await this.readingModel.updateOne({ _id: lastRecord._id }, reading);
+    //   return { message: 'Lectura actualizada.' };
+    // }
+    // const createdReading = new this.readingModel(reading);
+    // await createdReading.save();
+    // return { message: 'Lectura creada.' };
   }
 
   async getClients() {

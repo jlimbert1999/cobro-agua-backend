@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { Document, HydratedDocument } from 'mongoose';
 
 export enum ClientStatus {
   ENABLED = 'enabled',
@@ -9,7 +9,7 @@ export enum ClientStatus {
 export type ClientDocument = HydratedDocument<Customer>;
 
 @Schema()
-export class Customer {
+export class Customer extends Document {
   @Prop({
     required: true,
     type: String,
