@@ -1,15 +1,15 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Customer, MeterReading } from '../schemas';
+import { MeterReading } from '../schemas';
 import { Connection, FilterQuery, Model } from 'mongoose';
 import { CreateReadingDto } from '../dto';
 import { InvoiceService } from './invoice.service';
+import { PaginationParamsDto } from 'src/common/dtos';
 
 @Injectable()
 export class ReadingService {
   constructor(
     @InjectConnection() private connection: Connection,
-    @InjectModel(Customer.name) private clientModel: Model<Customer>,
     @InjectModel(MeterReading.name) private readingModel: Model<MeterReading>,
     private invoiceService: InvoiceService,
   ) {}
@@ -17,7 +17,7 @@ export class ReadingService {
   async create(readingDto: CreateReadingDto) {
     const { client, reading } = readingDto;
     const date = new Date();
-    await this._checkDuplicate(date);
+    await this._checkDuplicate(date, readingDto.client);
     const session = await this.connection.startSession();
     try {
       session.startTransaction();
@@ -42,21 +42,23 @@ export class ReadingService {
     }
   }
 
+  async getReadingsByClient(id_client: string, { limit, offset }: PaginationParamsDto) {
+    return await this.readingModel.find({ client: id_client }).sort({ reading_date: -1 }).limit(limit).skip(offset);
+  }
+
   async getPreviusReading(id_client: string) {
     return await this.readingModel.findOne({ client: id_client }).sort({ reading_date: -1 });
   }
 
-  async getDebts(id_client: string) {
-    return await this.readingModel.findOne({ client: id_client });
-  }
-
-  private async _checkDuplicate(date: Date) {
+  private async _checkDuplicate(date: Date, id_client: string) {
     const year = date.getFullYear();
     const month = date.getMonth();
     const query: FilterQuery<MeterReading> = {
       reading_date: { $gte: new Date(year, month, 1), $lt: new Date(year, month + 1, 1) },
+      client: id_client,
     };
     const duplicate = await this.readingModel.findOne(query);
+    console.log(duplicate);
     if (duplicate) throw new BadRequestException('Ya existe una lectura para la fecha proporcionada');
   }
 

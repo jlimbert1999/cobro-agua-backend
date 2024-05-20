@@ -1,19 +1,23 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document } from 'mongoose';
-import { Invoice } from './invoice.schema';
+import { Invoice, Customer } from './';
 
 @Schema()
 export class Payment extends Document {
   @Prop({
     type: mongoose.Schema.Types.ObjectId,
-    ref: Invoice.name,
+    ref: Customer.name,
     required: true,
   })
-  invoice: Invoice;
+  customer: Customer;
+
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: Invoice.name }] })
+  invoices: Invoice[];
 
   @Prop({
     type: Date,
     required: true,
+    default: Date.now,
   })
   payment_date: Date;
 

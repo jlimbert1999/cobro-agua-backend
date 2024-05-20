@@ -9,7 +9,7 @@ import { EnvConfiguration } from './config/env.configuration';
 import { UserModule } from './users/user.module';
 
 @Module({
-  controllers: [AppController],
+  controllers: [ AppController],
   providers: [AppService],
   imports: [
     AuthModule,
