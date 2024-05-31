@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Connection, Model } from 'mongoose';
-import { Customer, Invoice, InvoiceStatus } from '../schemas';
+import { Customer, Invoice, InvoiceStatus, Payment } from '../schemas';
 import { ConfigService } from './config.service';
 import { PaymentService } from './payment.service';
+import { PaginationParamsDto } from 'src/common/dtos';
 
 @Injectable()
 export class InvoiceService {
@@ -11,13 +12,15 @@ export class InvoiceService {
     @InjectConnection() private connection: Connection,
     @InjectModel(Invoice.name) private invoiceModel: Model<Invoice>,
     @InjectModel(Customer.name) private customerModel: Model<Customer>,
+    @InjectModel(Payment.name) private paymentModel: Model<Payment>,
     private configService: ConfigService,
     private paymentService: PaymentService,
   ) {}
 
   async generateConsumptionInvoice(id_client: string, consumption: number, session: ClientSession) {
     const amount = await this._calculateConsumptionAmount(consumption);
-    const createdInvoice = new this.invoiceModel({ client: id_client, amount });
+    const code = await this.invoiceModel.countDocuments();
+    const createdInvoice = new this.invoiceModel({ client: id_client, amount, code: `${code + 1}` });
     return await createdInvoice.save({ session });
   }
 
@@ -45,6 +48,15 @@ export class InvoiceService {
     } finally {
       session.endSession();
     }
+  }
+
+  async getHistoryByCustomer(id_customer: string, { limit, offset }: PaginationParamsDto) {
+    return await this.paymentModel
+      .find({ customer: id_customer })
+      .populate('invoices customer')
+      .sort({ issue_date: -1 })
+      .skip(offset)
+      .limit(limit);
   }
 
   private async _calculateConsumptionAmount(consumption: number): Promise<number> {

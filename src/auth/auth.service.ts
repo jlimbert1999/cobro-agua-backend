@@ -47,7 +47,7 @@ export class AuthService {
   }
 
   private _getMenu(roles: UserRole[]) {
-    const menu: { label: string; icon: string; routerLink: string }[] = [];
+    const menu: { label: string; icon: string; routerLink?: string; items?: any }[] = [];
     if (roles.includes(UserRole.ADMIN)) {
       menu.push(
         {
@@ -69,7 +69,16 @@ export class AuthService {
           icon: 'pi pi-fw pi-id-card',
           routerLink: 'customers',
         },
-        { label: 'Reportes', icon: 'pi pi-fw pi-search', routerLink: 'reports' },
+        {
+          label: 'Reportes',
+          icon: 'pi pi-fw pi-search',
+          items: [
+            {
+              label: 'Estado de cuenta',
+              routerLink: 'reports/customer-status',
+            },
+          ],
+        },
       );
     }
     return menu;

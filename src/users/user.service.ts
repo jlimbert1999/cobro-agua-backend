@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
@@ -17,9 +13,22 @@ export class UserService {
 
   async findAll({ limit, offset }: PaginationParamsDto) {
     const [users, length] = await Promise.all([
-      this.userModel.find({}).skip(offset).limit(limit).sort({ _id: -1 }),
+      this.userModel.find({}).select({ password: false }).skip(offset).limit(limit).sort({ _id: -1 }),
       this.userModel.countDocuments(),
     ]);
+    return { users, length };
+  }
+  async search(term: string, { limit, offset }: PaginationParamsDto) {
+    const [users, length] = await Promise.all([
+      this.userModel
+        .find({ fullname: new RegExp(term, 'i') })
+        .select({ password: false })
+        .skip(offset)
+        .limit(limit)
+        .sort({ _id: -1 }),
+      this.userModel.countDocuments({ fullname: new RegExp(term, 'i') }),
+    ]);
+    console.log(users);
     return { users, length };
   }
 
@@ -43,7 +52,7 @@ export class UserService {
     if (userDto.password) {
       userDto['password'] = this._encryptPassword(userDto.password);
     }
-    const updatedUser = await this.userModel.findByIdAndUpdate(id, userDto);
+    const updatedUser = await this.userModel.findByIdAndUpdate(id, userDto, { new: true });
     return this._removePasswordField(updatedUser);
   }
 

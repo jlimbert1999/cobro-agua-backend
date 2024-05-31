@@ -43,11 +43,15 @@ export class ReadingService {
   }
 
   async getReadingsByClient(id_client: string, { limit, offset }: PaginationParamsDto) {
-    return await this.readingModel.find({ client: id_client }).sort({ reading_date: -1 }).limit(limit).skip(offset);
+    const [readings, length] = await Promise.all([
+      this.readingModel.find({ client: id_client }).sort({ reading_date: -1 }).limit(limit).skip(offset),
+      this.readingModel.countDocuments({ client: id_client }),
+    ]);
+    return { readings, length };
   }
 
-  async getPreviusReading(id_client: string) {
-    return await this.readingModel.findOne({ client: id_client }).sort({ reading_date: -1 });
+  async getPreviusReading(id_customer: string) {
+    return await this.readingModel.findOne({ client: id_customer }).sort({ reading_date: -1 });
   }
 
   private async _checkDuplicate(date: Date, id_client: string) {
@@ -58,7 +62,6 @@ export class ReadingService {
       client: id_client,
     };
     const duplicate = await this.readingModel.findOne(query);
-    console.log(duplicate);
     if (duplicate) throw new BadRequestException('Ya existe una lectura para la fecha proporcionada');
   }
 

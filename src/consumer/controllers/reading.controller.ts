@@ -7,9 +7,9 @@ import { PaginationParamsDto } from 'src/common/dtos';
 export class ReadingController {
   constructor(private readingService: ReadingService) {}
 
-  @Get('last/:id_client')
-  getPreviusReading(@Param('id_client') id_client: string) {
-    return this.readingService.getPreviusReading(id_client);
+  @Get('previus/:id_customer')
+  getPreviusReading(@Param('id_customer') id_customer: string) {
+    return this.readingService.getPreviusReading(id_customer);
   }
 
   @Get(':id_customer')

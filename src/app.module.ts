@@ -7,9 +7,10 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { EnvConfiguration } from './config/env.configuration';
 import { UserModule } from './users/user.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
-  controllers: [ AppController],
+  controllers: [AppController],
   providers: [AppService],
   imports: [
     AuthModule,
@@ -20,6 +21,7 @@ import { UserModule } from './users/user.module';
       isGlobal: true,
     }),
     MongooseModule.forRoot('mongodb://127.0.0.1/water-charges'),
+    ScheduleModule.forRoot(),
   ],
 })
 export class AppModule {}

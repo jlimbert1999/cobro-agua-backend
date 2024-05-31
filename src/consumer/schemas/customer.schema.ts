@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, HydratedDocument } from 'mongoose';
 
-export enum ClientStatus {
+export enum CustomerStatus {
   ENABLED = 'enabled',
   DISABLED = 'disabled',
 }
@@ -51,10 +51,10 @@ export class Customer extends Document {
 
   @Prop({
     required: true,
-    enum: Object.values(ClientStatus),
-    default: ClientStatus.ENABLED,
+    enum: Object.values(CustomerStatus),
+    default: CustomerStatus.ENABLED,
   })
-  status: ClientStatus;
+  status: CustomerStatus;
 }
 
 export const CustomertSchema = SchemaFactory.createForClass(Customer);
