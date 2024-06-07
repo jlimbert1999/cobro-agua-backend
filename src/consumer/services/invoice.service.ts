@@ -1,11 +1,17 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Connection, Model } from 'mongoose';
-import { Customer, Invoice, InvoiceStatus, Payment } from '../schemas';
+import { Customer, Invoice, InvoiceStatus, MeterReading, Payment } from '../schemas';
 import { ConfigService } from './config.service';
 import { PaymentService } from './payment.service';
 import { PaginationParamsDto } from 'src/common/dtos';
 
+interface createInvoiceProps {
+  id_client: string;
+  id_service: string;
+  consumption: number;
+  session: ClientSession;
+}
 @Injectable()
 export class InvoiceService {
   constructor(
@@ -17,10 +23,16 @@ export class InvoiceService {
     private paymentService: PaymentService,
   ) {}
 
-  async generateConsumptionInvoice(id_client: string, consumption: number, session: ClientSession) {
+  async generateConsumptionInvoice({ id_client, id_service, consumption, session }: createInvoiceProps) {
     const amount = await this._calculateConsumptionAmount(consumption);
     const code = await this.invoiceModel.countDocuments();
-    const createdInvoice = new this.invoiceModel({ client: id_client, amount, code: `${code + 1}` });
+    const createdInvoice = new this.invoiceModel({
+      code: `${code + 1}`,
+      client: id_client,
+      service: id_service,
+      category: MeterReading.name,
+      amount,
+    });
     return await createdInvoice.save({ session });
   }
 

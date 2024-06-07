@@ -30,7 +30,12 @@ export class ReadingService {
         consumption: props.consumption,
       });
       await createMeterReading.save({ session });
-      await this.invoiceService.generateConsumptionInvoice(client, props.consumption, session);
+      await this.invoiceService.generateConsumptionInvoice({
+        id_client: client,
+        id_service: createMeterReading._id,
+        consumption: props.consumption,
+        session,
+      });
       await session.commitTransaction();
       return { message: 'Lectura creada' };
     } catch (error) {

@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document, HydratedDocument } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 import { Customer } from './customer.schema';
+import { MeterReading } from './meter-reading.schema';
 
-export type InvoiceDocument = HydratedDocument<Invoice>;
 export enum InvoiceStatus {
   PENDING = 'pending',
   PAID = 'paid',
@@ -41,6 +41,20 @@ export class Invoice extends Document {
     default: InvoiceStatus.PENDING,
   })
   status: InvoiceStatus;
+
+  @Prop({
+    type: String,
+    required: true,
+    enum: [MeterReading.name],
+  })
+  category: string;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    refPath: 'category',
+  })
+  service: MeterReading;
 }
 
 export const InvoiceSchema = SchemaFactory.createForClass(Invoice);

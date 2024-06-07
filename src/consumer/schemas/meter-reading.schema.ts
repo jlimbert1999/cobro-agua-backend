@@ -1,8 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document, HydratedDocument } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 import { Customer } from './customer.schema';
-
-export type ReadingDocument = HydratedDocument<MeterReading>;
 
 @Schema()
 export class MeterReading extends Document {
