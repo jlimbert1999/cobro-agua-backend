@@ -1,19 +1,12 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Connection, FilterQuery, Model } from 'mongoose';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { FilterQuery, Model } from 'mongoose';
 import { Customer } from '../schemas';
 import { CreateClientDto, UpdateClientDto } from '../dto';
 
 @Injectable()
 export class ClientService {
-  constructor(
-    @InjectModel(Customer.name) private clientModel: Model<Customer>,
-    @InjectConnection() private connection: Connection,
-  ) {}
+  constructor(@InjectModel(Customer.name) private clientModel: Model<Customer>) {}
 
   async findAll(limit: number, offset: number) {
     const [clients, length] = await Promise.all([
@@ -32,13 +25,7 @@ export class ClientService {
       .aggregate()
       .addFields({
         fullname: {
-          $concat: [
-            '$firstname',
-            ' ',
-            '$middlename',
-            ' ',
-            { $ifNull: ['$lastname', ''] },
-          ],
+          $concat: ['$firstname', ' ', '$middlename', ' ', { $ifNull: ['$lastname', ''] }],
         },
       })
       .match(query)

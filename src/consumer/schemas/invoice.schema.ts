@@ -9,12 +9,6 @@ export enum InvoiceStatus {
 }
 @Schema()
 export class Invoice extends Document {
-  @Prop({
-    type: String,
-    required: true,
-    unique: true,
-  })
-  code: string;
 
   @Prop({
     type: mongoose.Schema.Types.ObjectId,

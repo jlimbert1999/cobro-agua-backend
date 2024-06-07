@@ -21,4 +21,9 @@ export class ReadingController {
   create(@Body() reading: CreateReadingDto) {
     return this.readingService.create(reading);
   }
+
+  @Post('upload')
+  upload(@Body() data: any[]) {
+    return this.readingService.upload(data);
+  }
 }

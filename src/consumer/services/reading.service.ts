@@ -1,16 +1,25 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { MeterReading } from '../schemas';
+import { Customer, MeterReading } from '../schemas';
 import { Connection, FilterQuery, Model } from 'mongoose';
 import { CreateReadingDto } from '../dto';
 import { InvoiceService } from './invoice.service';
 import { PaginationParamsDto } from 'src/common/dtos';
 
+interface uploaddata {
+  firstname: string;
+  middlename: string;
+  lastname: string;
+  dni: string;
+  phone: string;
+  address: string;
+}
 @Injectable()
 export class ReadingService {
   constructor(
     @InjectConnection() private connection: Connection,
     @InjectModel(MeterReading.name) private readingModel: Model<MeterReading>,
+    @InjectModel(Customer.name) private customerModel: Model<Customer>,
     private invoiceService: InvoiceService,
   ) {}
 
@@ -39,8 +48,10 @@ export class ReadingService {
       await session.commitTransaction();
       return { message: 'Lectura creada' };
     } catch (error) {
-      console.log(error);
       await session.abortTransaction();
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Error al registrar el lectura');
     } finally {
       session.endSession();
@@ -74,7 +85,15 @@ export class ReadingService {
     const previousRecord = await this.getPreviusReading(id_client);
     const previous_reading = previousRecord ? previousRecord.current_reading : 0;
     const consumption = current_reading - previous_reading;
-    if (consumption <= 0) throw new BadRequestException('Registro invalido');
+    if (consumption <= 0) throw new BadRequestException('Registro invalido. El consumo es menor al anterior');
     return { previous_reading, current_reading, consumption };
+  }
+
+  async upload(data: uploaddata[]) {
+    for (const item of data) {
+      const customer = new this.customerModel(item);
+      await customer.save();
+    }
+    return true;
   }
 }

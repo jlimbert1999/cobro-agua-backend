@@ -19,7 +19,7 @@ export class TaskService {
     const users = await this.clientModel.find({}).select({ _id: 1 });
     for (const user of users) {
       const totalPendingInvoices = await this.invoiceModel.countDocuments({ client: user._id });
-      if (totalPendingInvoices < settings.maxDelayMonths) {
+      if (totalPendingInvoices >= settings.maxDelayMonths) {
         await this.clientModel.updateOne({ _id: user._id }, { status: CustomerStatus.DISABLED });
       }
     }

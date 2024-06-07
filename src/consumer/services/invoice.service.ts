@@ -25,9 +25,7 @@ export class InvoiceService {
 
   async generateConsumptionInvoice({ id_client, id_service, consumption, session }: createInvoiceProps) {
     const amount = await this._calculateConsumptionAmount(consumption);
-    const code = await this.invoiceModel.countDocuments();
     const createdInvoice = new this.invoiceModel({
-      code: `${code + 1}`,
       client: id_client,
       service: id_service,
       category: MeterReading.name,
@@ -37,7 +35,7 @@ export class InvoiceService {
   }
 
   async getUnpaidInvoicesByCustomer(id_client: string) {
-    return await this.invoiceModel.find({ client: id_client, status: InvoiceStatus.PENDING });
+    return await this.invoiceModel.find({ client: id_client, status: InvoiceStatus.PENDING }).populate('service');
   }
 
   async payInvoices(id_invoices: string[], id_client: string) {

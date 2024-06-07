@@ -1,16 +1,10 @@
-import { Controller, Get, Post, Body, Param, Put } from '@nestjs/common';
+import { Controller, Get, Body, Param, Put } from '@nestjs/common';
 import { ConsumerService } from './consumer.service';
-import { CreateReadingDto, UpdateReadingDto } from './dto';
+import { UpdateReadingDto } from './dto';
 
 @Controller('consumer')
 export class ConsumerController {
   constructor(private readonly consumerService: ConsumerService) {}
-
-  @Post('reading')
-  createReading(@Body() reading: CreateReadingDto) {
-    return this.consumerService.createReading(reading);
-  }
-
 
   @Get('clients')
   getClients() {
