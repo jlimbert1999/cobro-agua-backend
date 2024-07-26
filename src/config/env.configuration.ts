@@ -8,5 +8,5 @@ export default () => ({
     user: process.env.DATABASE_USER,
     password: process.env.DATABASE_PASSWORD,
   },
-  jwt_key: process.env.JWT_KEY,
+  jwt_key: process.env.JWT_TOKEN,
 });

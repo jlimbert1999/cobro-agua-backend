@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Connection, Model } from 'mongoose';
-import { Customer, Invoice, InvoiceStatus, MeterReading, Payment } from '../schemas';
 import { ConfigService } from './config.service';
 import { PaymentService } from './payment.service';
 import { PaginationParamsDto } from 'src/common/dtos';

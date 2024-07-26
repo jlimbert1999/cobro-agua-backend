@@ -22,8 +22,5 @@ export class ReadingController {
     return this.readingService.create(reading);
   }
 
-  @Post('upload')
-  upload(@Body() data: any[]) {
-    return this.readingService.upload(data);
-  }
+
 }

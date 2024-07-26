@@ -1,23 +1,24 @@
+import { AdministrationModule } from './administration/administration.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
+import { join } from 'path';
+
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
 import { ConsumerModule } from './consumer/consumer.module';
 import { AuthModule } from './auth/auth.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/env.configuration';
 import { UserModule } from './users/user.module';
-import { ScheduleModule } from '@nestjs/schedule';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
 import { PaymentModule } from './payment/payment.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   controllers: [AppController],
   providers: [AppService],
   imports: [
     ConfigModule.forRoot({ load: [configuration], isGlobal: true }),
-   
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -38,6 +39,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     ScheduleModule.forRoot(),
     AuthModule,
     UserModule,
+    AdministrationModule,
     ConsumerModule,
     PaymentModule,
   ],

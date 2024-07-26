@@ -8,6 +8,7 @@ export class PaginationParamsDto {
   @Min(1)
   @Max(50)
   limit: number;
+  
 
   @Type(() => Number)
   @IsInt()

@@ -1,10 +1,13 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Customer } from './customer.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
 import { MeterReading } from './meter-reading.entity';
 
 @Entity()
 export class Invoice {
+  @PrimaryGeneratedColumn()
+  id: number;
+  
   @Column()
   amount: number;
 

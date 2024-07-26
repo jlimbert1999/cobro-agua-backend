@@ -22,4 +22,8 @@ export class CreateClientDto {
   @IsString()
   @IsNotEmpty()
   address: string;
+
+  @IsString()
+  @IsNotEmpty()
+  meterNumber: string;
 }

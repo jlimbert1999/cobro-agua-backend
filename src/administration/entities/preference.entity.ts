@@ -1,8 +1,11 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { CustomerType } from './customer-type.entity';
 
 @Entity()
 export class Preference {
+  @PrimaryGeneratedColumn()
+  id: number;
+
   @Column()
   maxUnits: number;
 
@@ -12,9 +15,6 @@ export class Preference {
   @Column()
   priceByUnit: number;
 
-  @Column()
-  maxDelayMonths: number;
-
-  @ManyToOne(() => CustomerType, (customerType) => customerType.preferences)
+  @ManyToOne(() => CustomerType, (customerType) => customerType.preferences, { onDelete: 'CASCADE' })
   customerType: CustomerType;
 }

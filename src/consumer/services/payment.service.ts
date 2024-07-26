@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Invoice, Payment } from '../schemas';
 import { ClientSession, Model } from 'mongoose';
 
 @Injectable()
 export class PaymentService {
   constructor() {}
 
-  async create(invoices: Invoice[], id_customer: string, session: ClientSession) {
+  async create(invoices: any[], id_customer: string, session: any) {
     // const amount: number = invoices.reduce((acc, prev) => acc + prev.amount, 0);
     // const code = await this._generateCode();
     // const createPayment = new this.paymentModel({

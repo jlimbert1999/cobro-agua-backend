@@ -1,8 +1,8 @@
-import { Entity, Column, OneToMany, ManyToOne } from 'typeorm';
-import { MeterReading } from '../schemas';
-import { CustomerType } from './customer-type.entity';
+import { Entity, Column, OneToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { CustomerType } from '../../administration/entities/customer-type.entity';
 import { Invoice } from './invoice.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
+import { MeterReading } from './meter-reading.entity';
 
 export enum CustomerStatus {
   ENABLED = 'enabled',
@@ -11,23 +11,26 @@ export enum CustomerStatus {
 
 @Entity()
 export class Customer {
-  @Column()
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ nullable: true })
   firstname: string;
 
-  @Column()
+  @Column({ nullable: true })
   middlename: string;
 
-  @Column()
-  lastname: number;
+  @Column({ nullable: true })
+  lastname: string;
 
-  @Column({ unique: true })
+  @Column({ nullable: true })
   dni: string;
 
-  @Column()
+  @Column({ nullable: true })
   phone: string;
 
   @Column()
-  address: string;
+  meterNumber: string;
 
   @Column({
     type: 'enum',
@@ -36,7 +39,7 @@ export class Customer {
   })
   status: CustomerStatus;
 
-  @OneToMany(() => MeterReading, (reading) => reading.client)
+  @OneToMany(() => MeterReading, (reading) => reading.customer)
   readings: MeterReading[];
 
   @ManyToOne(() => CustomerType, (customerType) => customerType.customers)

@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import { Cron } from '@nestjs/schedule';
-import { Model } from 'mongoose';
-import { Customer, CustomerStatus, Invoice } from '../schemas';
 import { ConfigService } from './config.service';
 
 @Injectable()

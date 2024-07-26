@@ -1,6 +1,5 @@
 import { BadRequestException, HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Customer, MeterReading } from '../schemas';
 import { Connection, FilterQuery, Model } from 'mongoose';
 import { CreateReadingDto } from '../dto';
 import { InvoiceService } from './invoice.service';
@@ -89,11 +88,4 @@ export class ReadingService {
     // return { previous_reading, current_reading, consumption };
   }
 
-  async upload(data: uploaddata[]) {
-    // for (const item of data) {
-    //   const customer = new this.customerModel(item);
-    //   await customer.save();
-    // }
-    // return true;
-  }
 }

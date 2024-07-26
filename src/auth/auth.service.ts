@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
+import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+
 import { User, UserRole } from 'src/users/schemas/user.schema';
-import { AuthDto } from './dto/auth.dto';
 import { JwtPayload } from './interfaces/jwt.interface';
+import { AuthDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -22,14 +23,19 @@ export class AuthService {
     }
     return {
       token: this._generateToken(userDB),
-      redirectTo: this._getRoute(userDB.ri),
+      redirectTo: this._getRoute(userDB.roles),
+      menu: this._getMenu(userDB.roles),
     };
   }
 
-  async checkAuthStatus(id_user: number) {
-    // const userDB = await this.userModel.findById(id_user);
-    // if (!userDB) throw new UnauthorizedException();
-    // return { token: this._generateToken(userDB), menu: this._getMenu(userDB.roles) };
+  async checkAuthStatus(userId: string) {
+    const userDB = await this.userRepository.findOneBy({ id: userId });
+    if (!userDB) throw new UnauthorizedException();
+    return {
+      token: this._generateToken(userDB),
+      redirectTo: this._getRoute(userDB.roles),
+      menu: this._getMenu(userDB.roles),
+    };
   }
 
   private _generateToken(user: User): string {
@@ -41,7 +47,7 @@ export class AuthService {
   }
 
   private _getRoute(roles: UserRole[]): string {
-    if (roles.includes(UserRole.ADMIN)) return 'home/users';
+    if (roles.includes(UserRole.ADMIN)) return 'home/administration/users';
     if (roles.includes(UserRole.OFFICER)) return 'home/customers';
     return '';
   }
@@ -53,12 +59,17 @@ export class AuthService {
         {
           label: 'Usuarios',
           icon: 'pi pi-fw pi-user',
-          routerLink: 'users',
+          routerLink: 'administration/users',
         },
         {
           label: 'Configuracion',
           icon: 'pi pi-fw pi-cog',
-          routerLink: 'settings',
+          items: [
+            {
+              label: 'Tipos Accionistas',
+              routerLink: 'administration/customer-types',
+            },
+          ],
         },
       );
     }

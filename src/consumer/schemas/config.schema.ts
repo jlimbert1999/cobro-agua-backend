@@ -1,33 +1,33 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+// import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+// import { HydratedDocument } from 'mongoose';
 
-export type ConfigDocument = HydratedDocument<Config>;
+// export type ConfigDocument = HydratedDocument<Config>;
 
-@Schema()
-export class Config {
-  @Prop({
-    required: true,
-    type: Number,
-  })
-  basePrice: number;
+// @Schema()
+// export class Config {
+//   @Prop({
+//     required: true,
+//     type: Number,
+//   })
+//   basePrice: number;
 
-  @Prop({
-    required: true,
-    type: Number,
-  })
-  maxUnits: number;
+//   @Prop({
+//     required: true,
+//     type: Number,
+//   })
+//   maxUnits: number;
 
-  @Prop({
-    required: true,
-    type: Number,
-  })
-  pricePerExcessUnit: number;
+//   @Prop({
+//     required: true,
+//     type: Number,
+//   })
+//   pricePerExcessUnit: number;
 
-  @Prop({
-    required: true,
-    type: Number,
-  })
-  maxDelayMonths: number;
-}
+//   @Prop({
+//     required: true,
+//     type: Number,
+//   })
+//   maxDelayMonths: number;
+// }
 
-export const ConfigSchema = SchemaFactory.createForClass(Config);
+// export const ConfigSchema = SchemaFactory.createForClass(Config);

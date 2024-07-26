@@ -51,8 +51,7 @@ export class UserService {
   }
 
   private _removePasswordField(user: User) {
-    const result = { ...user.toObject() };
-    delete result.password;
-    return result;
+    delete user.password;
+    return user;
   }
 }

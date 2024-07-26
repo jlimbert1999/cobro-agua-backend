@@ -1,8 +1,11 @@
-import { Column, CreateDateColumn, Entity, ManyToOne } from 'typeorm';
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Customer } from './customer.entity';
 
 @Entity()
-export class MeterReading extends Document {
+export class MeterReading{
+  @PrimaryGeneratedColumn()
+  id: number;
+  
   @Column()
   previous_reading: number;
 

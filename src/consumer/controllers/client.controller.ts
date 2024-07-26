@@ -1,28 +1,15 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Patch,
-  Get,
-  Param,
-  Query,
-} from '@nestjs/common';
-import { ClientService } from '../services';
+import { Controller, Post, Body, Patch, Get, Param, Query } from '@nestjs/common';
+import { CustomerService } from '../services';
 import { CreateClientDto, UpdateClientDto } from '../dto';
 import { PaginationParamsDto } from 'src/common/dtos';
 
 @Controller('clients')
 export class ClientController {
-  constructor(private clientService: ClientService) {}
+  constructor(private clientService: CustomerService) {}
 
   @Get()
   findAll(@Query() params: PaginationParamsDto) {
-    return this.clientService.findAll(params.limit, params.offset);
-  }
-
-  @Get('search/:term')
-  search(@Param('term') term: string, @Query() params: PaginationParamsDto) {
-    return this.clientService.search(term, params.limit, params.offset);
+    return this.clientService.findAll(params.limit, params.offset, params.term);
   }
 
   @Post()
@@ -32,6 +19,11 @@ export class ClientController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() client: UpdateClientDto) {
-    return this.clientService.update(id, client);
+    return this.clientService.update(+id, client);
+  }
+
+  @Post('upload')
+  upload(@Body() data: any[]) {
+    return this.clientService.uploadData(data);
   }
 }
