@@ -1,9 +1,11 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-import { Model } from 'mongoose';
+
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Repository } from 'typeorm';
+
 import { JwtPayload } from './interfaces/jwt.interface';
 import { User } from 'src/users/schemas/user.schema';
 
@@ -11,7 +13,7 @@ import { User } from 'src/users/schemas/user.schema';
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private configService: ConfigService,
-    @InjectModel(User.name) private userRepository: Model<User>,
+    @InjectRepository(User) private userRepository: Repository<User>,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -19,14 +21,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       secretOrKey: configService.getOrThrow('jwt_key'),
     });
   }
-  async validate(payload: JwtPayload): Promise<User> {
+  async validate(payload: JwtPayload): Promise<any> {
     const { id_user } = payload;
-    const userDB = await this.userRepository.findById(id_user);
-    if (!userDB) {
-      throw new UnauthorizedException(
-        'Token invalido, vuelva a iniciar sesion',
-      );
-    }
+    const userDB = await this.userRepository.findOne({ where: { id: id_user } });
+    if (!userDB) throw new UnauthorizedException('Token invalido, vuelva a iniciar sesion');
+    delete userDB.password;
     return userDB;
   }
 }

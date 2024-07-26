@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User, UserRole } from 'src/users/schemas/user.schema';
 import { AuthDto } from './dto/auth.dto';
@@ -10,26 +10,26 @@ import { JwtPayload } from './interfaces/jwt.interface';
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<User>,
+    @InjectRepository(User) private userRepository: Repository<User>,
     private jwtService: JwtService,
   ) {}
 
   async login({ login, password }: AuthDto) {
-    const userDB = await this.userModel.findOne({ login });
+    const userDB = await this.userRepository.findOneBy({ login });
     if (!userDB) throw new BadRequestException('Usuario o Contraseña incorrectos');
     if (!bcrypt.compareSync(password, userDB.password)) {
       throw new BadRequestException('Usuario o Contraseña incorrectos');
     }
     return {
       token: this._generateToken(userDB),
-      redirectTo: this._getRoute(userDB.roles),
+      redirectTo: this._getRoute(userDB.ri),
     };
   }
 
   async checkAuthStatus(id_user: number) {
-    const userDB = await this.userModel.findById(id_user);
-    if (!userDB) throw new UnauthorizedException();
-    return { token: this._generateToken(userDB), menu: this._getMenu(userDB.roles) };
+    // const userDB = await this.userModel.findById(id_user);
+    // if (!userDB) throw new UnauthorizedException();
+    // return { token: this._generateToken(userDB), menu: this._getMenu(userDB.roles) };
   }
 
   private _generateToken(user: User): string {

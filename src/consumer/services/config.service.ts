@@ -6,20 +6,20 @@ import { ConfigDto } from '../dto';
 
 @Injectable()
 export class ConfigService {
-  constructor(@InjectModel(Config.name) private configModel: Model<Config>) {}
+  constructor() {}
 
   async create(configDto: ConfigDto) {
-    const configDB = await this.configModel.findOne({});
-    if (configDB) {
-      await this.configModel.deleteOne({ _id: configDB._id });
-    }
-    const newConfig = new this.configModel(configDto);
-    return await newConfig.save();
+    // const configDB = await this.configModel.findOne({});
+    // if (configDB) {
+    //   await this.configModel.deleteOne({ _id: configDB._id });
+    // }
+    // const newConfig = new this.configModel(configDto);
+    // return await newConfig.save();
   }
 
-  async getSettings(): Promise<Config> {
-    const configDB = await this.configModel.findOne({});
-    if (!configDB) throw new BadRequestException('Sin parametros configurados');
-    return configDB;
+  async getSettings(): Promise<any> {
+    // const configDB = await this.configModel.findOne({});
+    // if (!configDB) throw new BadRequestException('Sin parametros configurados');
+    // return configDB;
   }
 }

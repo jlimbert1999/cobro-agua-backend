@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ILike, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 import { User } from './schemas/user.schema';
@@ -9,60 +9,44 @@ import { PaginationParamsDto } from 'src/common/dtos';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(@InjectRepository(User) private userRepository: Repository<User>) {}
 
-  async findAll({ limit, offset }: PaginationParamsDto) {
-    const [users, length] = await Promise.all([
-      this.userModel.find({}).select({ password: false }).skip(offset).limit(limit).sort({ _id: -1 }),
-      this.userModel.countDocuments(),
-    ]);
-    return { users, length };
-  }
-  async search(term: string, { limit, offset }: PaginationParamsDto) {
-    const [users, length] = await Promise.all([
-      this.userModel
-        .find({ fullname: new RegExp(term, 'i') })
-        .select({ password: false })
-        .skip(offset)
-        .limit(limit)
-        .sort({ _id: -1 }),
-      this.userModel.countDocuments({ fullname: new RegExp(term, 'i') }),
-    ]);
-    console.log(users);
-    return { users, length };
+  async findAll({ limit, offset, term }: PaginationParamsDto) {
+    const [users, length] = await this.userRepository.findAndCount({
+      take: limit,
+      skip: offset,
+      ...(term && {
+        where: { fullname: ILike(`%${term}%`) },
+      }),
+    });
+    return { users: users.map((user) => this._removePasswordField(user)), length };
   }
 
   async create({ password, ...props }: CreateUserDto) {
     await this._checkDuplicateLogin(props.login);
-    const encryptedPassword = this._encryptPassword(password);
-    const newUser = new this.userModel({
-      ...props,
-      password: encryptedPassword,
-    });
-    const createdUser = await newUser.save();
+    const encryptedPassword = await this._encryptPassword(password);
+    const newUser = this.userRepository.create({ ...props, password: encryptedPassword });
+    const createdUser = await this.userRepository.save(newUser);
     return this._removePasswordField(createdUser);
   }
 
-  async update(id: string, userDto: UpdateUserDto) {
-    const userDB = await this.userModel.findById(id);
+  async update(id: string, user: UpdateUserDto) {
+    const userDB = await this.userRepository.findOneBy({ id });
     if (!userDB) throw new NotFoundException(`El usuario editado no existe`);
-    if (userDto.login !== userDB.login) {
-      await this._checkDuplicateLogin(userDto.login);
-    }
-    if (userDto.password) {
-      userDto['password'] = this._encryptPassword(userDto.password);
-    }
-    const updatedUser = await this.userModel.findByIdAndUpdate(id, userDto, { new: true });
+    if (user.login !== userDB.login) await this._checkDuplicateLogin(user.login);
+    if (user.password) user['password'] = await this._encryptPassword(user.password);
+    const updatedUser = await this.userRepository.save({ id, ...user });
     return this._removePasswordField(updatedUser);
   }
 
-  private _encryptPassword(password: string): string {
-    const salt = bcrypt.genSaltSync();
-    return bcrypt.hashSync(password, salt);
+  private async _encryptPassword(password: string): Promise<string> {
+    const saltRounds = 10;
+    const salt = await bcrypt.genSalt(saltRounds);
+    return bcrypt.hash(password, salt);
   }
 
   private async _checkDuplicateLogin(login: string) {
-    const duplicate = await this.userModel.findOne({ login });
+    const duplicate = await this.userRepository.findOneBy({ login });
     if (duplicate) throw new BadRequestException(`El login ${login} ya existe`);
   }
 

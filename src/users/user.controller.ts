@@ -12,12 +12,6 @@ export class UserController {
     return this.userService.findAll(params);
   }
 
-  @Get('search/:term')
-  search(@Param('term') term: string, @Query() params: PaginationParamsDto) {
-    console.log(term);
-    return this.userService.search(term, params);
-  }
-
   @Post()
   create(@Body() userDto: CreateUserDto) {
     return this.userService.create(userDto);
