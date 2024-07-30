@@ -11,6 +11,9 @@ export class CustomerType {
   name: string;
 
   @Column()
+  minimumPrice: number;
+
+  @Column()
   maxDelayMonths: number;
 
   @OneToMany(() => Preference, (preference) => preference.customerType, { cascade: true })

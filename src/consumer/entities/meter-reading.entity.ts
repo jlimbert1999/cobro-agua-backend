@@ -2,10 +2,10 @@ import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } f
 import { Customer } from './customer.entity';
 
 @Entity()
-export class MeterReading{
+export class MeterReading {
   @PrimaryGeneratedColumn()
   id: number;
-  
+
   @Column()
   previous_reading: number;
 
@@ -20,4 +20,7 @@ export class MeterReading{
 
   @ManyToOne(() => Customer, (customer) => customer.readings)
   customer: Customer;
+
+  @Column({ nullable: true })
+  customerId: string;
 }

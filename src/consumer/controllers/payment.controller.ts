@@ -4,7 +4,7 @@ https://docs.nestjs.com/controllers#controllers
 
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { InvoiceService } from '../services';
-import { UpdateInvoiceDto } from '../dto';
+import { UpdateInvoiceDto } from '../dtos';
 import { PaginationParamsDto } from 'src/common/dtos';
 
 @Controller('invoices')

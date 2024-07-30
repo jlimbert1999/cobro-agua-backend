@@ -62,14 +62,9 @@ export class AuthService {
           routerLink: 'administration/users',
         },
         {
-          label: 'Configuracion',
+          label: 'Grupos',
           icon: 'pi pi-fw pi-cog',
-          items: [
-            {
-              label: 'Tipos Accionistas',
-              routerLink: 'administration/customer-types',
-            },
-          ],
+          routerLink: 'administration/customer-types',
         },
       );
     }

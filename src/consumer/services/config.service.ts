@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ConfigDto } from '../dto';
+import { ConfigDto } from '../dtos';
 
 @Injectable()
 export class ConfigService {

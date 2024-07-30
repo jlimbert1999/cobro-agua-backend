@@ -57,6 +57,12 @@ export class CustomerTypeService {
     }
   }
 
+  async searchAvailables(term?: string) {
+    return await this.customerTypeRepository.find({
+      ...(term && { where: { name: ILike(`%${term}%`) }, take: 5 }),
+    });
+  }
+
   private async _findOnePlain(id: number) {
     return await this.customerTypeRepository.findOne({
       where: { id },

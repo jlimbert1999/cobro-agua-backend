@@ -1,6 +1,6 @@
 import { Controller, Get, Body, Param, Put } from '@nestjs/common';
 import { ConsumerService } from './consumer.service';
-import { UpdateReadingDto } from './dto';
+import { UpdateReadingDto } from './dtos';
 
 @Controller('consumer')
 export class ConsumerController {

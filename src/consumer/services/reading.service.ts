@@ -1,9 +1,12 @@
 import { BadRequestException, HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, FilterQuery, Model } from 'mongoose';
-import { CreateReadingDto } from '../dto';
+import { CreateReadingDto } from '../dtos';
 import { InvoiceService } from './invoice.service';
 import { PaginationParamsDto } from 'src/common/dtos';
+import { MeterReading } from '../entities';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 interface uploaddata {
   firstname: string;
@@ -15,12 +18,12 @@ interface uploaddata {
 }
 @Injectable()
 export class ReadingService {
-  constructor(
+  constructor(@InjectRepository(MeterReading) private meterReadingRepository: Repository<MeterReading>) {
     // @InjectConnection() private connection: Connection,
     // @InjectModel(MeterReading.name) private readingModel: Model<MeterReading>,
     // @InjectModel(Customer.name) private customerModel: Model<Customer>,
     // private invoiceService: InvoiceService,
-  ) {}
+  }
 
   async create(readingDto: CreateReadingDto) {
     const { client, reading } = readingDto;
@@ -28,23 +31,23 @@ export class ReadingService {
     await this._checkDuplicate(date, readingDto.client);
     // const session = await this.connection.startSession();
     // try {
-      // session.startTransaction();
-      // const props = await this._calculateConsumption(client, reading);
-      // const createMeterReading = new this.readingModel({
-      //   reading_date: date,
-      //   client: client,
-      //   previous_reading: props.previous_reading,
-      //   current_reading: props.current_reading,
-      //   consumption: props.consumption,
-      // });
-      // await createMeterReading.save({ session });
-      // await this.invoiceService.generateConsumptionInvoice({
-      //   id_client: client,
-      //   id_service: createMeterReading._id,
-      //   consumption: props.consumption,
-      //   session,
-      // });
-      // await session.commitTransaction();
+    // session.startTransaction();
+    // const props = await this._calculateConsumption(client, reading);
+    // const createMeterReading = new this.readingModel({
+    //   reading_date: date,
+    //   client: client,
+    //   previous_reading: props.previous_reading,
+    //   current_reading: props.current_reading,
+    //   consumption: props.consumption,
+    // });
+    // await createMeterReading.save({ session });
+    // await this.invoiceService.generateConsumptionInvoice({
+    //   id_client: client,
+    //   id_service: createMeterReading._id,
+    //   consumption: props.consumption,
+    //   session,
+    // });
+    // await session.commitTransaction();
     //   return { message: 'Lectura creada' };
     // } catch (error) {
     //   await session.abortTransaction();
@@ -65,8 +68,11 @@ export class ReadingService {
     // return { readings, length };
   }
 
-  async getPreviusReading(id_customer: string) {
-    // return await this.readingModel.findOne({ client: id_customer }).sort({ reading_date: -1 });
+  async getPreviusReading(customerId: string) {
+    return await this.meterReadingRepository.findOne({
+      where: { customerId: customerId },
+      order: { createdAt: 'DESC' },
+    });
   }
 
   private async _checkDuplicate(date: Date, id_client: string) {
@@ -87,5 +93,4 @@ export class ReadingService {
     // if (consumption <= 0) throw new BadRequestException('Registro invalido. El consumo es menor al anterior');
     // return { previous_reading, current_reading, consumption };
   }
-
 }

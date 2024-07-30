@@ -13,6 +13,11 @@ export class CreateCustomerTypeDto {
   @Min(1)
   maxDelayMonths: number;
 
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  minimumPrice:number
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PreferenceDto)

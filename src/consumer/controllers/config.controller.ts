@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ConfigDto } from '../dto';
+import { ConfigDto } from '../dtos';
 import { ConfigService } from '../services';
 
 @Controller('config')

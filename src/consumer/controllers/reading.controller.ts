@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ReadingService } from '../services';
-import { CreateReadingDto } from '../dto';
+import { CreateReadingDto } from '../dtos';
 import { PaginationParamsDto } from 'src/common/dtos';
 
 @Controller('readings')

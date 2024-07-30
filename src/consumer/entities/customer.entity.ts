@@ -1,4 +1,4 @@
-import { Entity, Column, OneToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, OneToMany, ManyToOne, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
 import { CustomerType } from '../../administration/entities/customer-type.entity';
 import { Invoice } from './invoice.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
@@ -11,8 +11,8 @@ export enum CustomerStatus {
 
 @Entity()
 export class Customer {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ nullable: true })
   firstname: string;
@@ -38,6 +38,9 @@ export class Customer {
     default: CustomerStatus.ENABLED,
   })
   status: CustomerStatus;
+
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt: Date;
 
   @OneToMany(() => MeterReading, (reading) => reading.customer)
   readings: MeterReading[];
