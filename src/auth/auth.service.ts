@@ -4,9 +4,9 @@ import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
-import { User, UserRole } from 'src/users/schemas/user.schema';
 import { JwtPayload } from './interfaces/jwt.interface';
 import { AuthDto } from './dto/auth.dto';
+import { User, UserRole } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -28,7 +28,7 @@ export class AuthService {
     };
   }
 
-  async checkAuthStatus(userId: string) {
+  async checkAuthStatus(userId: number) {
     const userDB = await this.userRepository.findOneBy({ id: userId });
     if (!userDB) throw new UnauthorizedException();
     return {
@@ -49,6 +49,7 @@ export class AuthService {
   private _getRoute(roles: UserRole[]): string {
     if (roles.includes(UserRole.ADMIN)) return 'home/administration/users';
     if (roles.includes(UserRole.OFFICER)) return 'home/customers';
+    if (roles.includes(UserRole.READER)) return 'home/reading/customers';
     return '';
   }
 
@@ -86,6 +87,13 @@ export class AuthService {
           ],
         },
       );
+    }
+    if (roles.includes(UserRole.READER)) {
+      menu.push({
+        label: 'Lecturas',
+        icon: 'pi pi-align-justify',
+        routerLink: 'reading/customers',
+      });
     }
     return menu;
   }

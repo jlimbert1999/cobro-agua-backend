@@ -7,7 +7,7 @@ import { MeterReading } from './meter-reading.entity';
 export class Invoice {
   @PrimaryGeneratedColumn()
   id: number;
-  
+
   @Column()
   amount: number;
 
@@ -23,4 +23,7 @@ export class Invoice {
 
   @ManyToOne(() => Payment, (payment) => payment.invoices)
   payment: Payment;
+
+  @Column({ nullable: true })
+  customerId: string;
 }

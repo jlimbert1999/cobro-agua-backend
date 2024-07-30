@@ -35,4 +35,9 @@ export class ClientController {
   searchTypesCustomers(@Query('term') term?: string) {
     return this.customerTypeService.searchAvailables(term);
   }
+
+  @Get('meter/:term')
+  searchByMeterNumber(@Param('term') term: string) {
+    return this.clientService.searchByMeterNumber(term);
+  }
 }

@@ -3,9 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
-import { User } from './schemas/user.schema';
 import { CreateUserDto, UpdateUserDto } from './dtos';
 import { PaginationParamsDto } from 'src/common/dtos';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UserService {
@@ -30,7 +30,7 @@ export class UserService {
     return this._removePasswordField(createdUser);
   }
 
-  async update(id: string, user: UpdateUserDto) {
+  async update(id: number, user: UpdateUserDto) {
     const userDB = await this.userRepository.findOneBy({ id });
     if (!userDB) throw new NotFoundException(`El usuario editado no existe`);
     if (user.login !== userDB.login) await this._checkDuplicateLogin(user.login);

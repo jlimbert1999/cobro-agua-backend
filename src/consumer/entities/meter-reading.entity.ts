@@ -1,5 +1,6 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Customer } from './customer.entity';
+import { Invoice } from './invoice.entity';
 
 @Entity()
 export class MeterReading {
@@ -7,10 +8,7 @@ export class MeterReading {
   id: number;
 
   @Column()
-  previous_reading: number;
-
-  @Column()
-  current_reading: number;
+  reading: number;
 
   @Column()
   consumption: number;
@@ -23,4 +21,7 @@ export class MeterReading {
 
   @Column({ nullable: true })
   customerId: string;
+
+  @OneToOne(() => Invoice, (invoice) => invoice.service)
+  invoice: Invoice;
 }

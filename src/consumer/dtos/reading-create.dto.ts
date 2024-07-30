@@ -1,9 +1,9 @@
-import { IsMongoId, IsNumber } from 'class-validator';
+import {  IsNumber, IsUUID } from 'class-validator';
 
 export class CreateReadingDto {
-  @IsMongoId()
-  client: string;
+  @IsUUID()
+  customerId: string;
 
   @IsNumber()
-  reading: number;
+  valueReading: number;
 }

@@ -53,10 +53,10 @@ export class CustomerService {
       const { otb, ...props } = item;
       const customer = this.customerRepository.create(props);
       if (otb === 'SI') {
-        customer.type = await this.customerTypeRepository.findOneBy({ id: 14 });
+        customer.type = await this.customerTypeRepository.findOneBy({ id: 16 });
       }
       if (otb === 'NO') {
-        customer.type = await this.customerTypeRepository.findOneBy({ id: 15 });
+        customer.type = await this.customerTypeRepository.findOneBy({ id: 17 });
       }
       await this.customerRepository.save(customer);
     }
@@ -95,5 +95,9 @@ export class CustomerService {
       .orderBy('customer.createdAt', 'DESC')
       .skip(params.offset)
       .take(params.limit);
+  }
+
+  async searchByMeterNumber(term: string) {
+    return await this.customerRepository.find({ where: { meterNumber: term }, relations: { type: true }, take: 5 });
   }
 }

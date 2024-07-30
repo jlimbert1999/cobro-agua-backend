@@ -4,37 +4,38 @@ import { ClientSession, Connection, Model } from 'mongoose';
 import { ConfigService } from './config.service';
 import { PaymentService } from './payment.service';
 import { PaginationParamsDto } from 'src/common/dtos';
+import { QueryRunner, Repository } from 'typeorm';
+import { Customer, MeterReading, Invoice } from '../entities';
+import { InjectRepository } from '@nestjs/typeorm';
 
-interface createInvoiceProps {
-  id_client: string;
-  id_service: string;
+interface invoiceConsumptionProps {
+  queryRunner: QueryRunner;
+  customer: Customer;
+  service: MeterReading;
   consumption: number;
-  session: ClientSession;
 }
 @Injectable()
 export class InvoiceService {
-  constructor(
-    // @InjectConnection() private connection: Connection,
-    // @InjectModel(Invoice.name) private invoiceModel: Model<Invoice>,
-    // @InjectModel(Customer.name) private customerModel: Model<Customer>,
-    // @InjectModel(Payment.name) private paymentModel: Model<Payment>,
-    // private configService: ConfigService,
+  constructor(@InjectRepository(Invoice) private invoiceRespository: Repository<Invoice>) {
+    // private configService: ConfigService, // @InjectModel(Payment.name) private paymentModel: Model<Payment>, // @InjectModel(Customer.name) private customerModel: Model<Customer>, // @InjectModel(Invoice.name) private invoiceModel: Model<Invoice>, // @InjectConnection() private connection: Connection,
     // private paymentService: PaymentService,
-  ) {}
-
-  async generateConsumptionInvoice({ id_client, id_service, consumption, session }: createInvoiceProps) {
-    // const amount = await this._calculateConsumptionAmount(consumption);
-    // const createdInvoice = new this.invoiceModel({
-    //   client: id_client,
-    //   service: id_service,
-    //   category: MeterReading.name,
-    //   amount,
-    // });
-    // return await createdInvoice.save({ session });
   }
 
-  async getUnpaidInvoicesByCustomer(id_client: string) {
-    // return await this.invoiceModel.find({ client: id_client, status: InvoiceStatus.PENDING }).populate('service');
+  async generateConsumptionInvoice({ queryRunner, customer, service, consumption }: invoiceConsumptionProps) {
+    const { preferences, minimumPrice } = customer.type;
+    const interval = preferences.find(({ maxUnits, minUnits }) => consumption >= minUnits && consumption < maxUnits);
+    if (!interval) throw new BadRequestException(`No range for reading: ${consumption}`);
+    const amount = consumption * interval.priceByUnit;
+    const createdInvoice = queryRunner.manager.create(Invoice, {
+      customer: customer,
+      amount: amount > minimumPrice ? amount : minimumPrice,
+      service: service,
+    });
+    await queryRunner.manager.save(createdInvoice);
+  }
+
+  async getUnpaidInvoicesByCustomer(customerId: string) {
+    return await this.invoiceRespository.find({ where: { customerId: customerId }, relations: { service: true } });
   }
 
   async payInvoices(id_invoices: string[], id_client: string) {
