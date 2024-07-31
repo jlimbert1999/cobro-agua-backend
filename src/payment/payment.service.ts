@@ -1,26 +1,44 @@
 import { Injectable } from '@nestjs/common';
-import { CreatePaymentDto } from './dto/create-payment.dto';
-import { UpdatePaymentDto } from './dto/update-payment.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { QueryRunner, Repository } from 'typeorm';
 
+import { Payment } from './entities/payment.entity';
+import { Customer, Invoice } from 'src/consumer/entities';
+import { PaginationParamsDto } from 'src/common/dtos';
+
+interface paymentProps {
+  queryRunner: QueryRunner;
+  customer: Customer;
+  invoices: Invoice[];
+}
 @Injectable()
 export class PaymentService {
-  create(createPaymentDto: CreatePaymentDto) {
-    return 'This action adds a new payment';
+  constructor(@InjectRepository(Payment) private paymentRepository: Repository<Payment>) {}
+
+  async create({ queryRunner, customer, invoices }: paymentProps) {
+    const amount: number = invoices.reduce((acc, prev) => acc + prev.amount, 0);
+    const code = await this._generateCode();
+    const createdPayment = queryRunner.manager.create(Payment, {
+      code,
+      amount,
+      invoices,
+      customer,
+    });
+    return await queryRunner.manager.save(createdPayment);
   }
 
-  findAll() {
-    return `This action returns all payment`;
+  async histoty(customerId: string, { limit, offset }: PaginationParamsDto) {
+    return await this.paymentRepository.find({
+      where: { customerId: customerId },
+      relations: { customer: true, invoices: true },
+      order: { createdAt: 'DESC' },
+      skip: offset,
+      take: limit,
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} payment`;
-  }
-
-  update(id: number, updatePaymentDto: UpdatePaymentDto) {
-    return `This action updates a #${id} payment`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} payment`;
+  private async _generateCode(): Promise<string> {
+    const correlative = await this.paymentRepository.count();
+    return `${correlative + 1}`;
   }
 }

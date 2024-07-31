@@ -13,7 +13,7 @@ export class MeterReading {
   @Column()
   consumption: number;
 
-  @CreateDateColumn()
+  @Column({ type: 'timestamptz' })
   createdAt: Date;
 
   @ManyToOne(() => Customer, (customer) => customer.readings)

@@ -26,4 +26,7 @@ export class Invoice {
 
   @Column({ nullable: true })
   customerId: string;
+
+  @Column({ nullable: true })
+  paymentId: string;
 }

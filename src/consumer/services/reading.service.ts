@@ -28,7 +28,7 @@ export class ReadingService {
     // private invoiceService: InvoiceService,
   }
 
-  async create({ customerId, reading }: CreateReadingDto) {
+  async create({ customerId, reading }: CreateReadingDto, date = new Date()) {
     // const { client, reading } = readingDto;
     // const startOfMonth = new Date();
     // startOfMonth.setDate(1);
@@ -50,6 +50,7 @@ export class ReadingService {
       relations: { type: { preferences: true } },
     });
     if (!customer) throw new BadRequestException(`Customer with ${customerId} dont exist`);
+    await this._checkDuplicate(customer.id);
     const consumption = await this._calculateConsumption(customerId, reading);
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -60,6 +61,7 @@ export class ReadingService {
         customer: customer,
         reading: reading,
         consumption: consumption,
+        createdAt: date,
       });
       await queryRunner.manager.save(createdMeterReading);
       await this.invoiceService.generateConsumptionInvoice({
@@ -88,25 +90,47 @@ export class ReadingService {
     });
   }
 
-  async getReadingsByClient(id_client: string, { limit, offset }: PaginationParamsDto) {
-    // const [readings, length] = await Promise.all([
-    //   this.readingModel.find({ client: id_client }).sort({ reading_date: -1 }).limit(limit).skip(offset),
-    //   this.readingModel.countDocuments({ client: id_client }),
-    // ]);
-    // return { readings, length };
-  }
-
- 
-
-  private async _checkDuplicate(date: Date, id_client: string) {
-    // const duplicate = await this.readingModel.findOne(query);
-    // if (duplicate) throw new BadRequestException('Ya existe una lectura para la fecha proporcionada');
+  async getReadingsByClient(customerId: string, { limit, offset }: PaginationParamsDto) {
+    const [readings, length] = await this.meterReadingRepository.findAndCount({
+      where: { customerId: customerId },
+      order: { createdAt: 'ASC' },
+      skip: offset,
+      take: limit,
+    });
+    return { readings, length };
   }
 
   private async _calculateConsumption(customerId: string, reading: number) {
     const lastReading = await this.getLastReading(customerId);
+    if (reading === 296) {
+      console.log(lastReading);
+      console.log(customerId);
+      const ress = await this.meterReadingRepository.find({ where: { customerId: customerId } });
+      console.log(ress);
+    }
     const consumption = reading - (lastReading ? lastReading.reading : 0);
-    if (consumption < 0) throw new BadRequestException('Invalid reading. current < last');
+    if (consumption < 0) {
+      console.log('current readng', reading);
+      console.log('ultimo valor', lastReading);
+      console.log('consumo actual', lastReading);
+      throw new BadRequestException('Invalid reading. current < last');
+    }
     return consumption;
+  }
+
+  private async _checkDuplicate(customerId: string) {
+    const currentDate = new Date();
+    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59);
+
+    const registroExistente = await this.meterReadingRepository.findOne({
+      where: {
+        customerId: customerId,
+        createdAt: Between(startOfMonth, endOfMonth),
+      },
+    });
+    if (registroExistente) {
+      throw new BadRequestException('Ya existe un registro para el mes actual');
+    }
   }
 }

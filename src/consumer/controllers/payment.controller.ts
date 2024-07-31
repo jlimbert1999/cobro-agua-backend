@@ -21,8 +21,8 @@ export class PaymentController {
     return this.invoiceService.getHistoryByCustomer(id_customer, { limit, offset });
   }
 
-  @Post('pay/:id_customer')
-  payInvoices(@Param('id_customer') id_customer: string, @Body() { id_invoices }: UpdateInvoiceDto) {
-    return this.invoiceService.payInvoices(id_invoices, id_customer);
+  @Post('pay/:customerId')
+  payInvoices(@Param('customerId') id_customer: string, @Body() { invoiceIds }: UpdateInvoiceDto) {
+    return this.invoiceService.payInvoices(invoiceIds, id_customer);
   }
 }

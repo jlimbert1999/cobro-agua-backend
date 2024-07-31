@@ -1,20 +1,22 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 
 import { CreateClientDto, FilterCustomerDto, UpdateClientDto } from '../dtos';
-import { Customer } from '../entities';
 import { CustomerType } from 'src/administration/entities';
 import { PaginationParamsDto } from 'src/common/dtos';
+import { Customer } from '../entities';
+import { ReadingService } from './reading.service';
 
 interface uploadData {
-  firstname: string;
-  middlename: string;
-  lastname: string;
-  dni: string;
-  phone: string;
-  meterNumber: string;
-  otb: string | null;
+  MEDIDOR: number;
+  PATERNO: string;
+  MATERNO: string;
+  NOMBRES: string;
+  CI: string;
+  CELULAR: string;
+  OTB: string;
+  [key: string]: string | number;
 }
 
 @Injectable()
@@ -22,6 +24,7 @@ export class CustomerService {
   constructor(
     @InjectRepository(Customer) private customerRepository: Repository<Customer>,
     @InjectRepository(CustomerType) private customerTypeRepository: Repository<CustomerType>,
+    private readingService: ReadingService,
   ) {}
 
   async findAll(paginationParams: PaginationParamsDto, filterParams: FilterCustomerDto) {
@@ -50,16 +53,39 @@ export class CustomerService {
 
   async uploadData(data: uploadData[]) {
     for (const item of data) {
-      const { otb, ...props } = item;
-      const customer = this.customerRepository.create(props);
-      if (otb === 'SI') {
+      const { PATERNO, MATERNO, NOMBRES, CELULAR, OTB, MEDIDOR, CI, ...props } = item;
+      const customer = this.customerRepository.create({
+        firstname: NOMBRES,
+        middlename: PATERNO,
+        lastname: MATERNO,
+        meterNumber: `${MEDIDOR}`,
+        phone: CELULAR,
+        dni: CI,
+      });
+      if (OTB.toUpperCase().trim() === 'SI') {
         customer.type = await this.customerTypeRepository.findOneBy({ id: 16 });
       }
-      if (otb === 'NO') {
+      if (OTB.toUpperCase().trim() === 'NO') {
         customer.type = await this.customerTypeRepository.findOneBy({ id: 17 });
       }
       await this.customerRepository.save(customer);
+      const dates = Object.entries(props)
+        .map(([key, value]) => ({ date: this.parseMonthYearToEndOfMonthDate(key), value }))
+        .sort((a, b) => {
+          if (a.date.getTime() !== b.date.getTime()) {
+            return a.date.getTime() - b.date.getTime();
+          }
+          return parseInt(`${a.value}`) - parseInt(`${b.value}`)
+        });
+
+      for (const element of dates) {
+        await this.readingService.create(
+          { customerId: customer.id, reading: parseInt(`${element.value}`) },
+          element.date,
+        );
+      }
     }
+    console.log('done!');
     return { ok: true };
   }
 
@@ -98,6 +124,18 @@ export class CustomerService {
   }
 
   async searchByMeterNumber(term: string) {
-    return await this.customerRepository.find({ where: { meterNumber: term }, relations: { type: true }, take: 5 });
+    const s = await this.customerRepository.find({
+      where: [{ meterNumber: term }, { firstname: ILike(`%${term}%`) }],
+      relations: { type: true },
+      take: 5,
+    });
+    return s;
+  }
+
+  parseMonthYearToEndOfMonthDate(monthYear: string): Date {
+    const [month, year] = monthYear.split('-').map(Number);
+    const fullYear = year < 100 ? 2000 + year : year;
+    const endOfMonth = new Date(fullYear, month, 0); // El día 0 del mes siguiente es el último día del mes actual
+    return endOfMonth;
   }
 }

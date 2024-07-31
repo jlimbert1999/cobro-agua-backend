@@ -1,7 +1,7 @@
-import { ArrayMinSize, IsMongoId } from 'class-validator';
+import { ArrayMinSize, IsInt } from 'class-validator';
 
 export class UpdateInvoiceDto {
-  @IsMongoId({ each: true })
+  @IsInt({ each: true })
   @ArrayMinSize(1)
-  id_invoices: string[];
+  invoiceIds: number[];
 }

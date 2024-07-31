@@ -6,7 +6,7 @@ import { Invoice } from 'src/consumer/entities/invoice.entity';
 export class Payment {
   @PrimaryGeneratedColumn()
   id: number;
-  
+
   @Column()
   code: string;
 
@@ -21,4 +21,7 @@ export class Payment {
 
   @ManyToOne(() => Customer, (customer) => customer.payments)
   customer: Customer;
+
+  @Column({ nullable: true })
+  customerId: string;
 }

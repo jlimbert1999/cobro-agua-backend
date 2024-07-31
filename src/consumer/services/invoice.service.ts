@@ -1,10 +1,10 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ConfigService } from './config.service';
-import { PaymentService } from './payment.service';
-import { PaginationParamsDto } from 'src/common/dtos';
-import { QueryRunner, Repository } from 'typeorm';
-import { Customer, MeterReading, Invoice } from '../entities';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, In, IsNull, QueryRunner, Repository } from 'typeorm';
+
+import { PaymentService } from 'src/payment/payment.service';
+import { PaginationParamsDto } from 'src/common/dtos';
+import { Customer, MeterReading, Invoice } from '../entities';
 
 interface invoiceConsumptionProps {
   queryRunner: QueryRunner;
@@ -14,15 +14,19 @@ interface invoiceConsumptionProps {
 }
 @Injectable()
 export class InvoiceService {
-  constructor(@InjectRepository(Invoice) private invoiceRespository: Repository<Invoice>) {
-    // private configService: ConfigService, // @InjectModel(Payment.name) private paymentModel: Model<Payment>, // @InjectModel(Customer.name) private customerModel: Model<Customer>, // @InjectModel(Invoice.name) private invoiceModel: Model<Invoice>, // @InjectConnection() private connection: Connection,
-    // private paymentService: PaymentService,
-  }
+  constructor(
+    @InjectRepository(Invoice) private invoiceRespository: Repository<Invoice>,
+    @InjectRepository(Customer) private customerRespository: Repository<Customer>,
+    private paymentService: PaymentService,
+    private dataSource: DataSource,
+  ) {}
 
   async generateConsumptionInvoice({ queryRunner, customer, service, consumption }: invoiceConsumptionProps) {
     const { preferences, minimumPrice } = customer.type;
-    const interval = preferences.find(({ maxUnits, minUnits }) => consumption >= minUnits && consumption < maxUnits);
-    if (!interval) throw new BadRequestException(`No range for reading: ${consumption}`);
+    const interval = preferences.find(({ maxUnits, minUnits }) => consumption >= minUnits && consumption <= maxUnits);
+    if (!interval) {
+      throw new BadRequestException(`No range for reading: ${consumption}`);
+    }
     const amount = consumption * interval.priceByUnit;
     const createdInvoice = queryRunner.manager.create(Invoice, {
       customer: customer,
@@ -33,41 +37,38 @@ export class InvoiceService {
   }
 
   async getUnpaidInvoicesByCustomer(customerId: string) {
-    return await this.invoiceRespository.find({
-      where: { customerId: customerId, payment: null },
+    const s = await this.invoiceRespository.find({
+      where: { customerId: customerId, paymentId: IsNull() },
       relations: { service: true },
+      order: { service: { createdAt: 'ASC' } },
     });
+    console.log(s);
+    return s;
   }
 
-  async payInvoices(id_invoices: string[], id_client: string) {
-    // const { invoices, customer } = await this._checkInvalidInvoiceToPay(id_invoices, id_client);
-    // const session = await this.connection.startSession();
-    // try {
-    //   session.startTransaction();
-    //   await this.invoiceModel.updateMany(
-    //     { _id: { $in: invoices.map((el) => el._id) } },
-    //     { $set: { status: InvoiceStatus.PAID } },
-    //     { session },
-    //   );
-    //   const payments = await this.paymentService.create(invoices, customer._id, session);
-    //   await session.commitTransaction();
-    //   return payments;
-    // } catch (error) {
-    //   console.log(error);
-    //   await session.abortTransaction();
-    //   throw new InternalServerErrorException('Error al realizar el pago');
-    // } finally {
-    //   session.endSession();
-    // }
+  async payInvoices(invoiceIds: number[], customerId: string) {
+    const customer = await this.customerRespository.findOneBy({ id: customerId });
+    if (!customer) throw new BadRequestException(`Customer ${customerId} dont exist`);
+    const invoices = await this._checkInvalidInvoiceToPay(invoiceIds, customerId);
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    try {
+      await queryRunner.startTransaction();
+      const payment = await this.paymentService.create({ queryRunner, customer, invoices });
+      await queryRunner.manager.update(Invoice, { id: In(invoices.map(({ id }) => id)) }, { payment: payment });
+      await queryRunner.commitTransaction();
+      return payment;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Error payment invoice');
+    } finally {
+      await queryRunner.release();
+    }
   }
 
-  async getHistoryByCustomer(id_customer: string, { limit, offset }: PaginationParamsDto) {
-    // return await this.paymentModel
-    //   .find({ customer: id_customer })
-    //   .populate('invoices customer')
-    //   .sort({ issue_date: -1 })
-    //   .skip(offset)
-    //   .limit(limit);
+  async getHistoryByCustomer(id_customer: string, paginatioParams: PaginationParamsDto) {
+    return this.paymentService.histoty(id_customer, paginatioParams);
   }
 
   private async _calculateConsumptionAmount(consumption: number): Promise<any> {
@@ -77,14 +78,10 @@ export class InvoiceService {
     // return basePrice + additionalPayent;
   }
 
-  private async _checkInvalidInvoiceToPay(id_invoices: string[], id_client: string) {
-    // const customer = await this.customerModel.findOne({ _id: id_client });
-    // if (!customer) throw new BadRequestException('El afiliado no existe');
-    // const invoicesToPay = await this.invoiceModel.find({ _id: { $in: id_invoices } });
-    // const isInvalidInvoice = invoicesToPay.some(
-    //   ({ status, client }) => status !== InvoiceStatus.PENDING || String(client._id) !== id_client,
-    // );
-    // if (isInvalidInvoice) throw new BadRequestException('Montos invalidos, Revise los pagos realizados');
-    // return { invoices: invoicesToPay, customer };
+  private async _checkInvalidInvoiceToPay(invoiceIds: number[], customerId: string) {
+    const invoicesToPay = await this.invoiceRespository.find({ where: { id: In(invoiceIds), customerId: customerId } });
+    const isInvalidInvoice = invoicesToPay.some(({ paymentId }) => paymentId);
+    if (isInvalidInvoice) throw new BadRequestException('Invalid invoice');
+    return invoicesToPay;
   }
 }
