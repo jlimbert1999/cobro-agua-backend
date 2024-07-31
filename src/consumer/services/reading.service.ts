@@ -28,7 +28,7 @@ export class ReadingService {
     // private invoiceService: InvoiceService,
   }
 
-  async create({ customerId, valueReading }: CreateReadingDto) {
+  async create({ customerId, reading }: CreateReadingDto) {
     // const { client, reading } = readingDto;
     // const startOfMonth = new Date();
     // startOfMonth.setDate(1);
@@ -50,7 +50,7 @@ export class ReadingService {
       relations: { type: { preferences: true } },
     });
     if (!customer) throw new BadRequestException(`Customer with ${customerId} dont exist`);
-    const consumption = await this._calculateConsumption(customerId, valueReading);
+    const consumption = await this._calculateConsumption(customerId, reading);
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
 
@@ -58,7 +58,7 @@ export class ReadingService {
       await queryRunner.startTransaction();
       const createdMeterReading = queryRunner.manager.create(MeterReading, {
         customer: customer,
-        reading: valueReading,
+        reading: reading,
         consumption: consumption,
       });
       await queryRunner.manager.save(createdMeterReading);
@@ -81,6 +81,13 @@ export class ReadingService {
     }
   }
 
+  async getLastReading(customerId: string): Promise<MeterReading | undefined> {
+    return await this.meterReadingRepository.findOne({
+      where: { customerId: customerId },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async getReadingsByClient(id_client: string, { limit, offset }: PaginationParamsDto) {
     // const [readings, length] = await Promise.all([
     //   this.readingModel.find({ client: id_client }).sort({ reading_date: -1 }).limit(limit).skip(offset),
@@ -89,12 +96,7 @@ export class ReadingService {
     // return { readings, length };
   }
 
-  async getPreviusReading(customerId: string): Promise<MeterReading | undefined> {
-    return await this.meterReadingRepository.findOne({
-      where: { customerId: customerId },
-      order: { createdAt: 'DESC' },
-    });
-  }
+ 
 
   private async _checkDuplicate(date: Date, id_client: string) {
     // const duplicate = await this.readingModel.findOne(query);
@@ -102,9 +104,9 @@ export class ReadingService {
   }
 
   private async _calculateConsumption(customerId: string, reading: number) {
-    const lastReading = await this.getPreviusReading(customerId);
+    const lastReading = await this.getLastReading(customerId);
     const consumption = reading - (lastReading ? lastReading.reading : 0);
-    if (consumption < 0) throw new BadRequestException('Registro invalido. El consumo es menor al anterior');
+    if (consumption < 0) throw new BadRequestException('Invalid reading. current < last');
     return consumption;
   }
 }

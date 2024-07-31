@@ -1,6 +1,4 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { ClientSession, Connection, Model } from 'mongoose';
 import { ConfigService } from './config.service';
 import { PaymentService } from './payment.service';
 import { PaginationParamsDto } from 'src/common/dtos';
@@ -35,7 +33,10 @@ export class InvoiceService {
   }
 
   async getUnpaidInvoicesByCustomer(customerId: string) {
-    return await this.invoiceRespository.find({ where: { customerId: customerId }, relations: { service: true } });
+    return await this.invoiceRespository.find({
+      where: { customerId: customerId, payment: null },
+      relations: { service: true },
+    });
   }
 
   async payInvoices(id_invoices: string[], id_client: string) {

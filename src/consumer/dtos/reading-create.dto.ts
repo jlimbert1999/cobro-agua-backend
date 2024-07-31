@@ -5,5 +5,5 @@ export class CreateReadingDto {
   customerId: string;
 
   @IsNumber()
-  valueReading: number;
+  reading: number;
 }

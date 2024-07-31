@@ -63,6 +63,10 @@ export class CustomerTypeService {
     });
   }
 
+  async getCustomerType(typeId: number) {
+    return await this.customerTypeRepository.findOne({ where: { id: typeId }, relations: { preferences: true } });
+  }
+
   private async _findOnePlain(id: number) {
     return await this.customerTypeRepository.findOne({
       where: { id },
