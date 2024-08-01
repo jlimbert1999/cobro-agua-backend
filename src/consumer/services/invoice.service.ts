@@ -37,13 +37,11 @@ export class InvoiceService {
   }
 
   async getUnpaidInvoicesByCustomer(customerId: string) {
-    const s = await this.invoiceRespository.find({
-      where: { customerId: customerId, paymentId: IsNull() },
+    return await this.invoiceRespository.find({
+      where: { customerId: customerId },
       relations: { service: true },
-      order: { service: { createdAt: 'ASC' } },
+      order: { service: { createdAt: 'DESC' } },
     });
-    console.log(s);
-    return s;
   }
 
   async payInvoices(invoiceIds: number[], customerId: string) {
@@ -69,13 +67,6 @@ export class InvoiceService {
 
   async getHistoryByCustomer(id_customer: string, paginatioParams: PaginationParamsDto) {
     return this.paymentService.histoty(id_customer, paginatioParams);
-  }
-
-  private async _calculateConsumptionAmount(consumption: number): Promise<any> {
-    // const { maxUnits, basePrice, pricePerExcessUnit } = await this.configService.getSettings();
-    // if (consumption < maxUnits) return basePrice;
-    // const additionalPayent = (consumption - maxUnits) * pricePerExcessUnit;
-    // return basePrice + additionalPayent;
   }
 
   private async _checkInvalidInvoiceToPay(invoiceIds: number[], customerId: string) {

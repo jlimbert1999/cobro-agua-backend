@@ -3,6 +3,11 @@ import { Customer } from './customer.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
 import { MeterReading } from './meter-reading.entity';
 
+export enum InvoiceStatus {
+  UNPAID = 'unpaid',
+  PAID = 'paid',
+}
+
 @Entity()
 export class Invoice {
   @PrimaryGeneratedColumn()
@@ -14,7 +19,10 @@ export class Invoice {
   @CreateDateColumn()
   createdAt: Date;
 
-  @OneToOne(() => MeterReading)
+  @Column({ type: 'enum', enum: InvoiceStatus, default: InvoiceStatus.UNPAID })
+  status: InvoiceStatus;
+
+  @OneToOne(() => MeterReading, { onDelete: 'CASCADE' })
   @JoinColumn()
   service: MeterReading;
 
