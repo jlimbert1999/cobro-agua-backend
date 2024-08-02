@@ -1,4 +1,3 @@
-import { AdministrationModule } from './administration/administration.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -6,17 +5,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
 import { join } from 'path';
 
-import { AppService } from './app.service';
-import { AppController } from './app.controller';
-import { ConsumerModule } from './consumer/consumer.module';
-import { AuthModule } from './auth/auth.module';
+import { ConsumerModule } from './modules/consumer/consumer.module';
 import configuration from './config/env.configuration';
-import { UserModule } from './users/user.module';
-import { PaymentModule } from './payment/payment.module';
+import { UserModule } from './modules/users/user.module';
+import { PaymentModule } from './modules/payment/payment.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { AdministrationModule } from './modules/administration/administration.module';
 
 @Module({
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [],
   imports: [
     ConfigModule.forRoot({ load: [configuration], isGlobal: true }),
     TypeOrmModule.forRootAsync({
