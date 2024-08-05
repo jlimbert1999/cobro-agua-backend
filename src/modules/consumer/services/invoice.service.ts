@@ -1,11 +1,11 @@
 import { BadRequestException, HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, QueryRunner, Repository } from 'typeorm';
+import { DataSource, In, IsNull, QueryRunner, Repository } from 'typeorm';
 
 import { PaymentService } from 'src/modules/payment/payment.service';
-import { Customer, MeterReading, Invoice } from '../entities';
-import { PaginationParamsDto } from 'src/common/dtos';
 import { Preference } from 'src/modules/administration/entities';
+import { Customer, MeterReading, Invoice, InvoiceStatus } from '../entities';
+import { PaginationParamsDto } from 'src/common/dtos';
 
 interface invoiceConsumptionProps {
   queryRunner: QueryRunner;
@@ -36,9 +36,9 @@ export class InvoiceService {
 
   async getUnpaidInvoicesByCustomer(customerId: string) {
     return await this.invoiceRespository.find({
-      where: { customerId: customerId },
+      where: { customerId: customerId, paymentId: IsNull() },
       relations: { service: true },
-      // order: { service: { createdAt: 'DESC' } },
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -51,7 +51,11 @@ export class InvoiceService {
     try {
       await queryRunner.startTransaction();
       const payment = await this.paymentService.create({ queryRunner, customer, invoices });
-      await queryRunner.manager.update(Invoice, { id: In(invoices.map(({ id }) => id)) }, { payment: payment });
+      await queryRunner.manager.update(
+        Invoice,
+        { id: In(invoices.map(({ id }) => id)) },
+        { payment: payment, status: InvoiceStatus.PAID },
+      );
       await queryRunner.commitTransaction();
       return payment;
     } catch (error) {
