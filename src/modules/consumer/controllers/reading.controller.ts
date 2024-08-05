@@ -25,9 +25,4 @@ export class ReadingController {
   create(@Body() reading: CreateReadingDto) {
     return this.readingService.create(reading);
   }
-
-  @Get('customer-type/:id')
-  getCustomerType(@Param('id') id: string) {
-    return this.customerTypeService.getCustomerType(+id);
-  }
 }

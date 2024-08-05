@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Customer } from './customer.entity';
 import { Invoice } from './invoice.entity';
 
@@ -13,8 +13,11 @@ export class MeterReading {
   @Column()
   consumption: number;
 
-  @Column({ type: 'timestamptz' })
-  createdAt: Date;
+  @Column()
+  year: number;
+
+  @Column()
+  month: number;
 
   @ManyToOne(() => Customer, (customer) => customer.readings)
   customer: Customer;

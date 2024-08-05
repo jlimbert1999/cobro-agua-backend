@@ -69,21 +69,21 @@ export class CustomerService {
         customer.type = await this.customerTypeRepository.findOneBy({ id: 17 });
       }
       await this.customerRepository.save(customer);
-      const dates = Object.entries(props)
-        .map(([key, value]) => ({ date: this.parseMonthYearToEndOfMonthDate(key), value }))
-        .sort((a, b) => {
-          if (a.date.getTime() !== b.date.getTime()) {
-            return a.date.getTime() - b.date.getTime();
-          }
-          return parseInt(`${a.value}`) - parseInt(`${b.value}`)
-        });
+      // const dates = Object.entries(props)
+      //   .map(([key, value]) => ({ date: this.parseMonthYearToEndOfMonthDate(key), value }))
+      //   .sort((a, b) => {
+      //     if (a.date.getTime() !== b.date.getTime()) {
+      //       return a.date.getTime() - b.date.getTime();
+      //     }
+      //     return parseInt(`${a.value}`) - parseInt(`${b.value}`);
+      //   });
 
-      for (const element of dates) {
-        await this.readingService.create(
-          { customerId: customer.id, reading: parseInt(`${element.value}`) },
-          element.date,
-        );
-      }
+      // for (const element of dates) {
+      //   await this.readingService.create(
+      //     { customerId: customer.id, reading: parseInt(`${element.value}`) },
+      //     element.date,
+      //   );
+      // }
     }
     console.log('done!');
     return { ok: true };

@@ -5,6 +5,7 @@ import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 import { PaymentService } from 'src/modules/payment/payment.service';
 import { Customer, MeterReading, Invoice } from '../entities';
 import { PaginationParamsDto } from 'src/common/dtos';
+import { Preference } from 'src/modules/administration/entities';
 
 interface invoiceConsumptionProps {
   queryRunner: QueryRunner;
@@ -24,9 +25,7 @@ export class InvoiceService {
 
   async generateConsumptionInvoice({ queryRunner, customer, service, consumption }: invoiceConsumptionProps) {
     const { preferences, minimumPrice } = customer.type;
-    const interval = preferences.find(({ maxUnits, minUnits }) => consumption >= minUnits && consumption <= maxUnits);
-    if (!interval) throw new BadRequestException(`No range for reading: ${consumption}`);
-    const amount = consumption * interval.priceByUnit;
+    const amount = this._calculateAmountToPay(consumption, preferences);
     const createdInvoice = queryRunner.manager.create(Invoice, {
       customer: customer,
       service: service,
@@ -39,7 +38,7 @@ export class InvoiceService {
     return await this.invoiceRespository.find({
       where: { customerId: customerId },
       relations: { service: true },
-      order: { service: { createdAt: 'DESC' } },
+      // order: { service: { createdAt: 'DESC' } },
     });
   }
 
@@ -66,6 +65,16 @@ export class InvoiceService {
 
   async getHistoryByCustomer(id_customer: string, paginatioParams: PaginationParamsDto) {
     return this.paymentService.histoty(id_customer, paginatioParams);
+  }
+
+  private _calculateAmountToPay(consumption: number, preferences: Preference[]) {
+    const sortedPreferences = preferences.slice().sort((a, b) => a.minUnits - b.minUnits);
+    let total = 0;
+    for (const range of sortedPreferences) {
+      total += range.priceByUnit;
+      if (consumption <= range.maxUnits) break;
+    }
+    return total;
   }
 
   private async _checkInvalidInvoiceToPay(invoiceIds: number[], customerId: string) {

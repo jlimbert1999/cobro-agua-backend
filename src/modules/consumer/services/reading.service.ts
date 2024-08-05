@@ -1,12 +1,18 @@
 import { BadRequestException, HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, QueryRunner, Repository } from 'typeorm';
+import { DataSource, LessThan, QueryRunner, Repository } from 'typeorm';
 
 import { PaginationParamsDto } from 'src/common/dtos';
 import { Customer, MeterReading } from '../entities';
 import { InvoiceService } from './invoice.service';
 import { CreateReadingDto } from '../dtos';
 
+interface consumptionProps {
+  customerId: string;
+  reading: number;
+  date: Date;
+  queryRunner: QueryRunner;
+}
 @Injectable()
 export class ReadingService {
   constructor(
@@ -17,7 +23,6 @@ export class ReadingService {
   ) {}
 
   async create({ customerId, reading }: CreateReadingDto, date = new Date()) {
-    date.setMonth(date.getMonth() - 1);
     const customer = await this.customerRepository.findOne({
       where: { id: customerId },
       relations: { type: { preferences: true } },
@@ -27,13 +32,19 @@ export class ReadingService {
     await queryRunner.connect();
     try {
       await queryRunner.startTransaction();
-      await this._checkDuplicate(customer.id, queryRunner);
-      const consumption = await this._calculateConsumption(customerId, reading, queryRunner);
+      await this._checkDuplicate(customer.id, date, queryRunner);
+      const consumption = await this._calculateConsumption({
+        queryRunner: queryRunner,
+        customerId: customer.id,
+        date: date,
+        reading,
+      });
       const createdMeterReading = queryRunner.manager.create(MeterReading, {
         consumption: consumption,
         customer: customer,
         reading: reading,
-        createdAt: date,
+        year: date.getFullYear(),
+        month: date.getMonth() - 1,
       });
       await queryRunner.manager.save(createdMeterReading);
       await this.invoiceService.generateConsumptionInvoice({
@@ -54,48 +65,43 @@ export class ReadingService {
   }
 
   async getLastReading(customerId: string): Promise<MeterReading | undefined> {
-    return await this.meterReadingRepository.findOne({
-      where: { customerId: customerId },
-      order: { createdAt: 'DESC' },
+    const date = new Date();
+    const last = await this.meterReadingRepository.findOne({
+      where: { customerId, year: date.getFullYear(), month: LessThan(date.getMonth() - 1) },
+      order: { year: 'DESC', month: 'DESC' },
     });
+    return last;
   }
 
   async getReadingsByClient(customerId: string, { limit, offset }: PaginationParamsDto) {
     const [readings, length] = await this.meterReadingRepository.findAndCount({
       where: { customerId: customerId },
-      order: { createdAt: 'DESC' },
       skip: offset,
       take: limit,
     });
     return { readings, length };
   }
 
-  private async _checkDuplicate(customerId: string, queryRunner: QueryRunner): Promise<void> {
-    const previusMonth = new Date().getMonth();
-    const year = new Date().getFullYear();
-    const duplicate = await queryRunner.manager
-      .createQueryBuilder(MeterReading, 'reading')
-      .where('reading.customerId = :id', { id: customerId })
-      .andWhere('EXTRACT(month FROM reading.createdAt) = :previusMonth', { previusMonth })
-      .andWhere('EXTRACT(year FROM reading.createdAt) = :year', { year })
-      .leftJoinAndSelect('reading.invoice', 'invoice')
-      .leftJoinAndSelect('invoice.payment', 'payment')
-      .getOne();
+  private async _checkDuplicate(customerId: string, date: Date, queryRunner: QueryRunner): Promise<void> {
+    const duplicate = await queryRunner.manager.findOne(MeterReading, {
+      where: { customerId: customerId, year: date.getFullYear(), month: date.getMonth() - 1 },
+      relations: { invoice: true },
+    });
     if (!duplicate) return;
-    if (duplicate.invoice.payment) {
+    if (duplicate.invoice.paymentId) {
       throw new BadRequestException('La lectura ya ha sido pagada. No se puede remplazar');
     }
     await queryRunner.manager.delete(MeterReading, { id: duplicate.id });
   }
 
-  private async _calculateConsumption(customerId: string, currentReading: number, queryRunner: QueryRunner) {
+  private async _calculateConsumption({ reading, customerId, date, queryRunner }: consumptionProps) {
     const lastRecord = await queryRunner.manager.findOne(MeterReading, {
-      where: { customerId: customerId },
-      order: { createdAt: 'DESC' },
+      where: { customerId, year: date.getFullYear(), month: LessThan(date.getMonth() - 1) },
+      order: { year: 'DESC', month: 'DESC' },
     });
-    const consumption = lastRecord ? currentReading - lastRecord.reading : 0;
+    const consumption = lastRecord ? reading - lastRecord.reading : 0;
     if (consumption < 0) {
-      throw new BadRequestException(`Lectura invalida. Actual: ${currentReading} < Anterior: ${lastRecord?.reading}`);
+      throw new BadRequestException(`Lectura invalida. Actual: ${reading} < Anterior: ${lastRecord?.reading}`);
     }
     return consumption;
   }
