@@ -1,11 +1,7 @@
-/*
-https://docs.nestjs.com/controllers#controllers
-*/
-
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { InvoiceService } from '../services';
-import { UpdateInvoiceDto } from '../dtos';
 import { PaginationParamsDto } from 'src/common/dtos';
+import { InvoiceService } from '../services';
+import { PaymentDto } from '../dtos';
 
 @Controller('invoices')
 export class PaymentController {
@@ -22,7 +18,7 @@ export class PaymentController {
   }
 
   @Post('pay/:customerId')
-  payInvoices(@Param('customerId') id_customer: string, @Body() { invoiceIds }: UpdateInvoiceDto) {
-    return this.invoiceService.payInvoices(invoiceIds, id_customer);
+  payInvoices(@Param('customerId') customerId: string, @Body() body: PaymentDto) {
+    return this.invoiceService.pay(customerId, body);
   }
 }

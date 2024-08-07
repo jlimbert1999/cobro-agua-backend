@@ -6,6 +6,7 @@ import { PaymentService } from 'src/modules/payment/payment.service';
 import { Preference } from 'src/modules/administration/entities';
 import { Customer, MeterReading, Invoice, InvoiceStatus } from '../entities';
 import { PaginationParamsDto } from 'src/common/dtos';
+import { PaymentDto } from '../dtos';
 
 interface invoiceConsumptionProps {
   queryRunner: QueryRunner;
@@ -42,7 +43,7 @@ export class InvoiceService {
     });
   }
 
-  async payInvoices(invoiceIds: number[], customerId: string) {
+  async pay(customerId: string, { invoiceIds }: PaymentDto) {
     const customer = await this.customerRespository.findOneBy({ id: customerId });
     if (!customer) throw new BadRequestException(`Customer ${customerId} dont exist`);
     const invoices = await this._checkInvalidInvoiceToPay(invoiceIds, customerId);
@@ -82,9 +83,12 @@ export class InvoiceService {
   }
 
   private async _checkInvalidInvoiceToPay(invoiceIds: number[], customerId: string) {
-    const invoicesToPay = await this.invoiceRespository.find({ where: { id: In(invoiceIds), customerId: customerId } });
-    const isInvalidInvoice = invoicesToPay.some(({ paymentId }) => paymentId);
-    if (isInvalidInvoice) throw new BadRequestException('Invalid invoice');
+    const invoicesToPay = await this.invoiceRespository.find({
+      where: { id: In(invoiceIds), customerId: customerId },
+      relations: { service: true },
+    });
+    const invalidInvoice = invoicesToPay.find(({ status, paymentId }) => status === InvoiceStatus.PAID || paymentId);
+    if (invalidInvoice) throw new BadRequestException(`La factura Nro. ${invalidInvoice.id} ya ha sido cancelada`);
     return invoicesToPay;
   }
 }
