@@ -69,26 +69,32 @@ export class CustomerService {
         customer.type = await this.customerTypeRepository.findOneBy({ id: 17 });
       }
       await this.customerRepository.save(customer);
-      // const dates = Object.entries(props)
-      //   .map(([key, value]) => ({ date: this.parseMonthYearToEndOfMonthDate(key), value }))
-      //   .sort((a, b) => {
-      //     if (a.date.getTime() !== b.date.getTime()) {
-      //       return a.date.getTime() - b.date.getTime();
-      //     }
-      //     return parseInt(`${a.value}`) - parseInt(`${b.value}`);
-      //   });
-
-      // for (const element of dates) {
-      //   await this.readingService.create(
-      //     { customerId: customer.id, reading: parseInt(`${element.value}`) },
-      //     element.date,
-      //   );
-      // }
+      const dates = Object.entries(props)
+        .map(([key, value]) => ({ date: this.parseMonthYearToEndOfMonthDate(key), value }))
+        .sort((a, b) => {
+          if (a.date.getTime() !== b.date.getTime()) {
+            return a.date.getTime() - b.date.getTime();
+          }
+          return parseInt(`${a.value}`) - parseInt(`${b.value}`);
+        });
+      for (const [index, item] of dates.entries()) {
+        if (index === 0) {
+          await this.readingService.createReadingWithoutInvoice(
+            parseInt(`${item.value}`),
+            customer,
+            item.date.getFullYear(),
+            item.date.getMonth(),
+          );
+        } else {
+          await this.readingService.create({ customerId: customer.id, reading: parseInt(`${item.value}`) }, item.date);
+        }
+      }
     }
     console.log('done!');
     return { ok: true };
   }
-
+  
+  
   private async _chechDuplicanteDni(dni: string): Promise<void> {
     const duplicate = await this.customerRepository.findOneBy({ dni });
     if (duplicate) throw new BadRequestException(`Duplicate dni: ${dni}`);
@@ -135,7 +141,7 @@ export class CustomerService {
   parseMonthYearToEndOfMonthDate(monthYear: string): Date {
     const [month, year] = monthYear.split('-').map(Number);
     const fullYear = year < 100 ? 2000 + year : year;
-    const endOfMonth = new Date(fullYear, month, 0); // El día 0 del mes siguiente es el último día del mes actual
+    const endOfMonth = new Date(fullYear, month + 1, 0); // El día 0 del mes siguiente es el último día del mes actual
     return endOfMonth;
   }
 }

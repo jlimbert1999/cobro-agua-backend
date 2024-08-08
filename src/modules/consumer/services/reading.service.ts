@@ -22,6 +22,18 @@ export class ReadingService {
     private dataSource: DataSource,
   ) {}
 
+  // ! delete after upload data
+  async createReadingWithoutInvoice(reading: number, customer: Customer, year: number, month: number) {
+    const createdMeterReading = this.meterReadingRepository.create({
+      consumption: 0,
+      customer: customer,
+      reading: reading,
+      year: year,
+      month: month - 1,
+    });
+    await this.meterReadingRepository.save(createdMeterReading);
+  }
+
   async create({ customerId, reading }: CreateReadingDto, date = new Date()) {
     const customer = await this.customerRepository.findOne({
       where: { id: customerId },
@@ -78,6 +90,10 @@ export class ReadingService {
       where: { customerId: customerId },
       skip: offset,
       take: limit,
+      order: {
+        year: 'ASC',
+        month: 'ASC',
+      },
     });
     return { readings, length };
   }
