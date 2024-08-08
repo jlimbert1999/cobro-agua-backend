@@ -44,7 +44,7 @@ export class InvoiceService {
   }
 
   async pay(customerId: string, { invoiceIds }: PaymentDto) {
-    const customer = await this.customerRespository.findOneBy({ id: customerId });
+    const customer = await this.customerRespository.findOne({ where: { id: customerId }, relations: { type: true } });
     if (!customer) throw new BadRequestException(`Customer ${customerId} dont exist`);
     const invoices = await this._checkInvalidInvoiceToPay(invoiceIds, customerId);
     const queryRunner = this.dataSource.createQueryRunner();
