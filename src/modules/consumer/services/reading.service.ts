@@ -68,6 +68,7 @@ export class ReadingService {
       await queryRunner.commitTransaction();
       return { message: 'Lectura registrada' };
     } catch (error) {
+      console.log(error);
       await queryRunner.rollbackTransaction();
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Error create reading');

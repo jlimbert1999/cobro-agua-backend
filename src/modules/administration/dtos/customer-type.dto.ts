@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsString, IsInt, IsPositive, Min, ValidateNested, IsArray } from 'class-validator';
+import { IsNotEmpty, IsString, IsInt, IsPositive, Min, ValidateNested, IsArray, IsNumber } from 'class-validator';
 
 export class CreateCustomerTypeDto {
   @IsNotEmpty()
@@ -38,7 +38,7 @@ export class PreferenceDto {
   maxUnits: number;
 
   @Type(() => Number)
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   priceByUnit: number;
 }

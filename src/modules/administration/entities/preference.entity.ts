@@ -12,7 +12,7 @@ export class Preference {
   @Column()
   minUnits: number;
 
-  @Column()
+  @Column({ type: 'float' })
   priceByUnit: number;
 
   @ManyToOne(() => CustomerType, (customerType) => customerType.preferences, { onDelete: 'CASCADE' })

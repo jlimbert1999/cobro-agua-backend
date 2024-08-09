@@ -21,8 +21,10 @@ export class TaskService {
       });
       if (totalPendingInvoices >= user.type.maxDelayMonths) {
         user.status = CustomerStatus.DISABLED;
-        await this.customerRepository.save(user);
+      } else {
+        user.status = CustomerStatus.ENABLED;
       }
+      await this.customerRepository.save(user);
     }
   }
 }

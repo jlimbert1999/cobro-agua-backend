@@ -13,7 +13,7 @@ export class Invoice {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ type: 'float' })
   amount: number;
 
   @CreateDateColumn({ type: 'timestamptz' })

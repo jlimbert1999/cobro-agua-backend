@@ -63,10 +63,10 @@ export class CustomerService {
         dni: CI,
       });
       if (OTB.toUpperCase().trim() === 'SI') {
-        customer.type = await this.customerTypeRepository.findOneBy({ id: 16 });
+        customer.type = await this.customerTypeRepository.findOneBy({ id: 18 });
       }
       if (OTB.toUpperCase().trim() === 'NO') {
-        customer.type = await this.customerTypeRepository.findOneBy({ id: 17 });
+        customer.type = await this.customerTypeRepository.findOneBy({ id: 19 });
       }
       await this.customerRepository.save(customer);
       const dates = Object.entries(props)

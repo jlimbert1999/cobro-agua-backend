@@ -10,7 +10,7 @@ export class Payment {
   @Column()
   code: string;
 
-  @Column()
+  @Column({ type: 'float' })
   amount: number;
 
   @CreateDateColumn()
