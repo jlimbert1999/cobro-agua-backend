@@ -1,8 +1,9 @@
-import {  IsNumber, IsUUID } from 'class-validator';
+import { IsNumber, IsPositive } from 'class-validator';
 
 export class CreateReadingDto {
-  @IsUUID()
-  customerId: string;
+  @IsNumber()
+  @IsPositive()
+  customerId: number;
 
   @IsNumber()
   reading: number;

@@ -35,7 +35,7 @@ export class InvoiceService {
     await queryRunner.manager.save(createdInvoice);
   }
 
-  async getUnpaidInvoicesByCustomer(customerId: string) {
+  async getUnpaidInvoicesByCustomer(customerId: number) {
     return await this.invoiceRespository.find({
       where: { customerId: customerId, paymentId: IsNull() },
       relations: { service: true },
@@ -43,7 +43,7 @@ export class InvoiceService {
     });
   }
 
-  async pay(customerId: string, { invoiceIds }: PaymentDto) {
+  async pay(customerId: number, { invoiceIds }: PaymentDto) {
     const customer = await this.customerRespository.findOne({ where: { id: customerId }, relations: { type: true } });
     if (!customer) throw new BadRequestException(`Customer ${customerId} dont exist`);
     const invoices = await this._checkInvalidInvoiceToPay(invoiceIds, customerId);
@@ -87,7 +87,7 @@ export class InvoiceService {
     return total > minimumPrice ? total : minimumPrice;
   }
 
-  private async _checkInvalidInvoiceToPay(invoiceIds: number[], customerId: string) {
+  private async _checkInvalidInvoiceToPay(invoiceIds: number[], customerId: number) {
     const invoicesToPay = await this.invoiceRespository.find({
       where: { id: In(invoiceIds), customerId: customerId },
       relations: { service: true },

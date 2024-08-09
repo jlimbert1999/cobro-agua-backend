@@ -9,7 +9,7 @@ export class PaymentController {
 
   @Get('unpaid/:id_customer')
   getUnpaidInvoicesByCustomer(@Param('id_customer') id_customer: string) {
-    return this.invoiceService.getUnpaidInvoicesByCustomer(id_customer);
+    return this.invoiceService.getUnpaidInvoicesByCustomer(+id_customer);
   }
 
   @Get('history/:id_customer')
@@ -19,6 +19,6 @@ export class PaymentController {
 
   @Post('pay/:customerId')
   payInvoices(@Param('customerId') customerId: string, @Body() body: PaymentDto) {
-    return this.invoiceService.pay(customerId, body);
+    return this.invoiceService.pay(+customerId, body);
   }
 }

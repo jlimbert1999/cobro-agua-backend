@@ -33,7 +33,7 @@ export class Invoice {
   payment: Payment;
 
   @Column({ nullable: true })
-  customerId: string;
+  customerId: number;
 
   @Column({ nullable: true })
   paymentId: string;

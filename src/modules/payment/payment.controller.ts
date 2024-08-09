@@ -1,5 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { PaymentService } from './payment.service';
+import { Controller } from '@nestjs/common';
 
 
 @Controller('payment')

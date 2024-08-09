@@ -54,7 +54,6 @@ export class CustomerTypeService {
       await queryRunner.commitTransaction();
       return await this._findOnePlain(id);
     } catch (err) {
-      console.log(err);
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException('Error al actualizar sucursal');
     } finally {

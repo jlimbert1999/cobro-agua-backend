@@ -23,7 +23,7 @@ export class MeterReading {
   customer: Customer;
 
   @Column({ nullable: true })
-  customerId: string;
+  customerId: number;
 
   @OneToOne(() => Invoice, (invoice) => invoice.service, { onDelete: 'CASCADE' })
   invoice: Invoice;

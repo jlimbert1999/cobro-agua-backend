@@ -11,8 +11,8 @@ export enum CustomerStatus {
 
 @Entity()
 export class Customer {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column({ nullable: true })
   firstname: string;

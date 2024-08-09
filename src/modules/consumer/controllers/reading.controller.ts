@@ -9,12 +9,12 @@ export class ReadingController {
 
   @Get('previus/:id_customer')
   getPreviusReading(@Param('id_customer') id_customer: string) {
-    return this.readingService.getLastReading(id_customer);
+    return this.readingService.getLastReading(+id_customer);
   }
 
   @Get(':customerId')
   getReadingsByCustomer(@Param('customerId') customerId: string, @Query() params: PaginationParamsDto) {
-    return this.readingService.getReadingsByClient(customerId, params);
+    return this.readingService.getReadingsByClient(+customerId, params);
   }
 
   @Post()

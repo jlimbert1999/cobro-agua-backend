@@ -23,7 +23,7 @@ export class ClientController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() client: UpdateClientDto) {
-    return this.clientService.update(id, client);
+    return this.clientService.update(+id, client);
   }
 
   @Post('upload')

@@ -40,7 +40,7 @@ export class CustomerService {
     return await this.customerRepository.save(createdCustomer);
   }
 
-  async update(id: string, clientDto: UpdateClientDto) {
+  async update(id: number, clientDto: UpdateClientDto) {
     const { type, ...toUpdate } = clientDto;
     const clientDB = await this.customerRepository.findOne({ where: { id }, relations: { type: true } });
     if (!clientDB) throw new NotFoundException(`Customer with ${id} dont exist`);

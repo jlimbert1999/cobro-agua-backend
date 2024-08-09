@@ -8,7 +8,7 @@ import { InvoiceService } from './invoice.service';
 import { CreateReadingDto } from '../dtos';
 
 interface consumptionProps {
-  customerId: string;
+  customerId: number;
   reading: number;
   date: Date;
   queryRunner: QueryRunner;
@@ -68,7 +68,6 @@ export class ReadingService {
       await queryRunner.commitTransaction();
       return { message: 'Lectura registrada' };
     } catch (error) {
-      console.log(error);
       await queryRunner.rollbackTransaction();
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException('Error create reading');
@@ -77,7 +76,7 @@ export class ReadingService {
     }
   }
 
-  async getLastReading(customerId: string): Promise<MeterReading | undefined> {
+  async getLastReading(customerId: number): Promise<MeterReading | undefined> {
     const date = new Date();
     const last = await this.meterReadingRepository.findOne({
       where: { customerId, year: date.getFullYear(), month: LessThan(date.getMonth() - 1) },
@@ -86,7 +85,7 @@ export class ReadingService {
     return last;
   }
 
-  async getReadingsByClient(customerId: string, { limit, offset }: PaginationParamsDto) {
+  async getReadingsByClient(customerId: number, { limit, offset }: PaginationParamsDto) {
     const [readings, length] = await this.meterReadingRepository.findAndCount({
       where: { customerId: customerId },
       skip: offset,
@@ -99,7 +98,7 @@ export class ReadingService {
     return { readings, length };
   }
 
-  private async _checkDuplicate(customerId: string, date: Date, queryRunner: QueryRunner): Promise<void> {
+  private async _checkDuplicate(customerId: number, date: Date, queryRunner: QueryRunner): Promise<void> {
     const duplicate = await queryRunner.manager.findOne(MeterReading, {
       where: { customerId: customerId, year: date.getFullYear(), month: date.getMonth() - 1 },
       relations: { invoice: true },
