@@ -26,11 +26,11 @@ export class InvoiceService {
 
   async generateConsumptionInvoice({ queryRunner, customer, service, consumption }: invoiceConsumptionProps) {
     const { preferences, minimumPrice } = customer.type;
-    const amount = this._calculateAmountToPay(consumption, preferences);
+    const amount = this._calculateAmountToPay(consumption, preferences, minimumPrice);
     const createdInvoice = queryRunner.manager.create(Invoice, {
       customer: customer,
       service: service,
-      amount: amount > minimumPrice ? amount : minimumPrice,
+      amount: amount,
     });
     await queryRunner.manager.save(createdInvoice);
   }
@@ -72,14 +72,19 @@ export class InvoiceService {
     return this.paymentService.histoty(id_customer, paginatioParams);
   }
 
-  private _calculateAmountToPay(consumption: number, preferences: Preference[]) {
+  private _calculateAmountToPay(consumption: number, preferences: Preference[], minimumPrice: number) {
     const sortedPreferences = preferences.slice().sort((a, b) => a.minUnits - b.minUnits);
     let total = 0;
     for (const range of sortedPreferences) {
-      total += range.priceByUnit;
-      if (consumption <= range.maxUnits) break;
+      if (consumption <= range.maxUnits) {
+        total += consumption * range.priceByUnit;
+        break;
+      }
+      const rangeUnits = range.maxUnits - range.minUnits + (range.minUnits === 0 ? 0 : 1);
+      total += range.maxUnits * range.priceByUnit;
+      consumption = consumption - rangeUnits;
     }
-    return total;
+    return total > minimumPrice ? total : minimumPrice;
   }
 
   private async _checkInvalidInvoiceToPay(invoiceIds: number[], customerId: string) {
