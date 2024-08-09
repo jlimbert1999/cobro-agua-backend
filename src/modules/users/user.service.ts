@@ -31,6 +31,7 @@ export class UserService {
   }
 
   async update(id: number, user: UpdateUserDto) {
+    console.log(id);
     const userDB = await this.userRepository.findOneBy({ id });
     if (!userDB) throw new NotFoundException(`El usuario editado no existe`);
     if (user.login !== userDB.login) await this._checkDuplicateLogin(user.login);

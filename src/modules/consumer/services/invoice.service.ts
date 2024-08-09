@@ -69,20 +69,20 @@ export class InvoiceService {
   }
 
   async getHistoryByCustomer(id_customer: string, paginatioParams: PaginationParamsDto) {
-    return this.paymentService.histoty(id_customer, paginatioParams);
+    return await this.paymentService.histoty(id_customer, paginatioParams);
   }
 
   private _calculateAmountToPay(consumption: number, preferences: Preference[], minimumPrice: number) {
     const sortedPreferences = preferences.slice().sort((a, b) => a.minUnits - b.minUnits);
     let total = 0;
     for (const range of sortedPreferences) {
-      if (consumption <= range.maxUnits) {
-        total += consumption * range.priceByUnit;
+      const rangeUnits = range.maxUnits - range.minUnits + (range.minUnits === 0 ? 0 : 1);
+      if (consumption <= rangeUnits) {
+        total += (consumption === 0 ? 1 : consumption) * range.priceByUnit;
         break;
       }
-      const rangeUnits = range.maxUnits - range.minUnits + (range.minUnits === 0 ? 0 : 1);
-      total += range.maxUnits * range.priceByUnit;
-      consumption = consumption - rangeUnits;
+      total += rangeUnits * range.priceByUnit;
+      consumption -= rangeUnits;
     }
     return total > minimumPrice ? total : minimumPrice;
   }

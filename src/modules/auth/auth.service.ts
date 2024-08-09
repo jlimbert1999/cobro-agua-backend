@@ -35,6 +35,7 @@ export class AuthService {
       token: this._generateToken(userDB),
       redirectTo: this._getRoute(userDB.roles),
       menu: this._getMenu(userDB.roles),
+      roles: userDB.roles,
     };
   }
 
@@ -49,7 +50,7 @@ export class AuthService {
   private _getRoute(roles: UserRole[]): string {
     if (roles.includes(UserRole.ADMIN)) return 'home/administration/users';
     if (roles.includes(UserRole.OFFICER)) return 'home/customers';
-    if (roles.includes(UserRole.READER)) return 'home/reading/customers';
+    if (roles.includes(UserRole.READER)) return 'home/reading';
     return '';
   }
 
@@ -92,7 +93,7 @@ export class AuthService {
       menu.push({
         label: 'Lecturas',
         icon: 'pi pi-align-justify',
-        routerLink: 'reading/customers',
+        routerLink: 'reading',
       });
     }
     return menu;

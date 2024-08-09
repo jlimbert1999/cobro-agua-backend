@@ -91,8 +91,8 @@ export class ReadingService {
       skip: offset,
       take: limit,
       order: {
-        year: 'ASC',
-        month: 'ASC',
+        year: 'DESC',
+        month: 'DESC',
       },
     });
     return { readings, length };

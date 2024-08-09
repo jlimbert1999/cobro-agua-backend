@@ -30,7 +30,7 @@ export class PaymentService {
   async histoty(customerId: string, { limit, offset }: PaginationParamsDto) {
     return await this.paymentRepository.find({
       where: { customerId: customerId },
-      relations: { customer: true, invoices: true },
+      relations: { customer: { type: true }, invoices: { service: true } },
       order: { createdAt: 'DESC' },
       skip: offset,
       take: limit,
