@@ -42,13 +42,13 @@ export class Customer {
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @OneToMany(() => MeterReading, (reading) => reading.customer)
+  @OneToMany(() => MeterReading, (reading) => reading.customer, { cascade: true, onDelete: 'CASCADE' })
   readings: MeterReading[];
 
   @ManyToOne(() => CustomerType, (customerType) => customerType.customers)
   type: CustomerType;
 
-  @OneToMany(() => Invoice, (invoice) => invoice.customer)
+  @OneToMany(() => Invoice, (invoice) => invoice.customer, { cascade: true, onDelete: 'CASCADE' })
   invoices: Invoice[];
 
   @OneToMany(() => Payment, (payment) => payment.customer)

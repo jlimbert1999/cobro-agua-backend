@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { ILike, In, Repository } from 'typeorm';
 
 import { CreateClientDto, FilterCustomerDto, UpdateClientDto } from '../dtos';
 import { PaginationParamsDto } from 'src/common/dtos';
@@ -52,49 +52,49 @@ export class CustomerService {
   }
 
   async uploadData(data: uploadData[]) {
-    for (const item of data) {
-      const { PATERNO, MATERNO, NOMBRES, CELULAR, OTB, MEDIDOR, CI, ...props } = item;
-      const customer = this.customerRepository.create({
-        firstname: NOMBRES,
-        middlename: PATERNO,
-        lastname: MATERNO,
-        meterNumber: `${MEDIDOR}`,
-        phone: CELULAR,
-        dni: CI,
-      });
-      if (OTB.toUpperCase().trim() === 'SI') {
-        customer.type = await this.customerTypeRepository.findOneBy({ id: 18 });
-      }
-      if (OTB.toUpperCase().trim() === 'NO') {
-        customer.type = await this.customerTypeRepository.findOneBy({ id: 19 });
-      }
-      await this.customerRepository.save(customer);
-      const dates = Object.entries(props)
-        .map(([key, value]) => ({ date: this.parseMonthYearToEndOfMonthDate(key), value }))
-        .sort((a, b) => {
-          if (a.date.getTime() !== b.date.getTime()) {
-            return a.date.getTime() - b.date.getTime();
-          }
-          return parseInt(`${a.value}`) - parseInt(`${b.value}`);
-        });
-      for (const [index, item] of dates.entries()) {
-        if (index === 0) {
-          await this.readingService.createReadingWithoutInvoice(
-            parseInt(`${item.value}`),
-            customer,
-            item.date.getFullYear(),
-            item.date.getMonth(),
-          );
-        } else {
-          await this.readingService.create({ customerId: customer.id, reading: parseInt(`${item.value}`) }, item.date);
-        }
-      }
-    }
-    console.log('done!');
-    return { ok: true };
+    // for (const item of data) {
+    //   const { PATERNO, MATERNO, NOMBRES, CELULAR, OTB, MEDIDOR, CI, ...props } = item;
+    //   const customer = this.customerRepository.create({
+    //     firstname: NOMBRES,
+    //     middlename: PATERNO,
+    //     lastname: MATERNO,
+    //     meterNumber: `${MEDIDOR}`,
+    //     phone: CELULAR,
+    //     dni: CI,
+    //   });
+    //   if (OTB.toUpperCase().trim() === 'SI') {
+    //     customer.type = await this.customerTypeRepository.findOneBy({ id: 1 });
+    //   }
+    //   if (OTB.toUpperCase().trim() === 'NO') {
+    //     customer.type = await this.customerTypeRepository.findOneBy({ id: 2 });
+    //   }
+    //   await this.customerRepository.save(customer);
+    //   const dates = Object.entries(props)
+    //     .map(([key, value]) => ({ date: this.parseMonthYearToEndOfMonthDate(key), value }))
+    //     .sort((a, b) => {
+    //       if (a.date.getTime() !== b.date.getTime()) {
+    //         return a.date.getTime() - b.date.getTime();
+    //       }
+    //       return parseInt(`${a.value}`) - parseInt(`${b.value}`);
+    //     });
+    //   for (const [index, item] of dates.entries()) {
+    //     if (index === 0) {
+    //       await this.readingService.createReadingWithoutInvoice(
+    //         parseInt(`${item.value}`),
+    //         customer,
+    //         item.date.getFullYear(),
+    //         item.date.getMonth(),
+    //       );
+    //     } else {
+    //       await this.readingService.create({ customerId: customer.id, reading: parseInt(`${item.value}`) }, item.date);
+    //     }
+    //   }
+    // }
+    // console.log('done!');
+    // return { ok: true };
+    // await this._repairDb(data);
   }
-  
-  
+
   private async _chechDuplicanteDni(dni: string): Promise<void> {
     const duplicate = await this.customerRepository.findOneBy({ dni });
     if (duplicate) throw new BadRequestException(`Duplicate dni: ${dni}`);
@@ -143,5 +143,54 @@ export class CustomerService {
     const fullYear = year < 100 ? 2000 + year : year;
     const endOfMonth = new Date(fullYear, month + 1, 0); // El día 0 del mes siguiente es el último día del mes actual
     return endOfMonth;
+  }
+
+  private async _repairDb(data: uploadData[]) {
+    // delete old customer
+    // ! replace id 2
+    const customersToDelete = await this.customerRepository.find({
+      where: { type: { id: 2 } },
+      relations: { payments: true },
+    });
+    const isInvalid = customersToDelete.find(({ payments }) => payments.length > 0);
+    if (isInvalid) throw new BadRequestException(`Nro ${isInvalid.meterNumber} contains payment`);
+    await this.customerRepository.delete({ id: In(customersToDelete.map(({ id }) => id)) });
+    data = data.filter(({ OTB }) => OTB === 'NO');
+    for (const item of data) {
+      const { PATERNO, MATERNO, NOMBRES, CELULAR, OTB, MEDIDOR, CI, ...props } = item;
+      const customer = this.customerRepository.create({
+        firstname: NOMBRES,
+        middlename: PATERNO,
+        lastname: MATERNO,
+        meterNumber: `${MEDIDOR}`,
+        phone: CELULAR,
+        dni: CI,
+      });
+      //  ! replace id 1
+      customer.type = await this.customerTypeRepository.findOneBy({ id: 1 });
+      await this.customerRepository.save(customer);
+      const dates = Object.entries(props)
+        .map(([key, value]) => ({ date: this.parseMonthYearToEndOfMonthDate(key), value }))
+        .sort((a, b) => {
+          if (a.date.getTime() !== b.date.getTime()) {
+            return a.date.getTime() - b.date.getTime();
+          }
+          return parseInt(`${a.value}`) - parseInt(`${b.value}`);
+        });
+      for (const [index, item] of dates.entries()) {
+        if (index === 0) {
+          await this.readingService.createReadingWithoutInvoice(
+            parseInt(`${item.value}`),
+            customer,
+            item.date.getFullYear(),
+            item.date.getMonth(),
+          );
+        } else {
+          await this.readingService.create({ customerId: customer.id, reading: parseInt(`${item.value}`) }, item.date);
+        }
+      }
+    }
+    console.log('done!');
+    return { ok: true };
   }
 }

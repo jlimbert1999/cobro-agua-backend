@@ -13,7 +13,7 @@ export class Payment {
   @Column({ type: 'float' })
   amount: number;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
   @OneToMany(() => Invoice, (invoice) => invoice.payment)

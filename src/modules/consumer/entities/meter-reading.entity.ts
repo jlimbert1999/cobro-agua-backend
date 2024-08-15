@@ -19,7 +19,7 @@ export class MeterReading {
   @Column()
   month: number;
 
-  @ManyToOne(() => Customer, (customer) => customer.readings)
+  @ManyToOne(() => Customer, (customer) => customer.readings, { onDelete: 'CASCADE' })
   customer: Customer;
 
   @Column({ nullable: true })

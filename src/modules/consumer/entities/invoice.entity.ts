@@ -26,7 +26,7 @@ export class Invoice {
   @JoinColumn()
   service: MeterReading;
 
-  @ManyToOne(() => Customer, (customer) => customer.invoices)
+  @ManyToOne(() => Customer, (customer) => customer.invoices, { onDelete: 'CASCADE' })
   customer: Customer;
 
   @ManyToOne(() => Payment, (payment) => payment.invoices)
