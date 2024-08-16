@@ -92,7 +92,7 @@ export class CustomerService {
     // }
     // console.log('done!');
     // return { ok: true };
-    // await this._repairDb(data);
+    await this._repairDb(data);
   }
 
   private async _chechDuplicanteDni(dni: string): Promise<void> {
@@ -148,49 +148,49 @@ export class CustomerService {
   private async _repairDb(data: uploadData[]) {
     // delete old customer
     // ! replace id 2
-    const customersToDelete = await this.customerRepository.find({
-      where: { type: { id: 2 } },
-      relations: { payments: true },
-    });
-    const isInvalid = customersToDelete.find(({ payments }) => payments.length > 0);
-    if (isInvalid) throw new BadRequestException(`Nro ${isInvalid.meterNumber} contains payment`);
-    await this.customerRepository.delete({ id: In(customersToDelete.map(({ id }) => id)) });
-    data = data.filter(({ OTB }) => OTB === 'NO');
-    for (const item of data) {
-      const { PATERNO, MATERNO, NOMBRES, CELULAR, OTB, MEDIDOR, CI, ...props } = item;
-      const customer = this.customerRepository.create({
-        firstname: NOMBRES,
-        middlename: PATERNO,
-        lastname: MATERNO,
-        meterNumber: `${MEDIDOR}`,
-        phone: CELULAR,
-        dni: CI,
-      });
-      //  ! replace id 1
-      customer.type = await this.customerTypeRepository.findOneBy({ id: 1 });
-      await this.customerRepository.save(customer);
-      const dates = Object.entries(props)
-        .map(([key, value]) => ({ date: this.parseMonthYearToEndOfMonthDate(key), value }))
-        .sort((a, b) => {
-          if (a.date.getTime() !== b.date.getTime()) {
-            return a.date.getTime() - b.date.getTime();
-          }
-          return parseInt(`${a.value}`) - parseInt(`${b.value}`);
-        });
-      for (const [index, item] of dates.entries()) {
-        if (index === 0) {
-          await this.readingService.createReadingWithoutInvoice(
-            parseInt(`${item.value}`),
-            customer,
-            item.date.getFullYear(),
-            item.date.getMonth(),
-          );
-        } else {
-          await this.readingService.create({ customerId: customer.id, reading: parseInt(`${item.value}`) }, item.date);
-        }
-      }
-    }
-    console.log('done!');
+    // const customersToDelete = await this.customerRepository.find({
+    //   where: { type: { id: 19 } },
+    //   relations: { payments: true },
+    // });
+    // const isInvalid = customersToDelete.find(({ payments }) => payments.length > 0);
+    // if (isInvalid) throw new BadRequestException(`Nro ${isInvalid.meterNumber} contains payment`);
+    // await this.customerRepository.delete({ id: In(customersToDelete.map(({ id }) => id)) });
+    // data = data.filter(({ OTB }) => OTB === 'NO');
+    // for (const item of data) {
+    //   const { PATERNO, MATERNO, NOMBRES, CELULAR, OTB, MEDIDOR, CI, ...props } = item;
+    //   const customer = this.customerRepository.create({
+    //     firstname: NOMBRES,
+    //     middlename: PATERNO,
+    //     lastname: MATERNO,
+    //     meterNumber: `${MEDIDOR}`,
+    //     phone: CELULAR,
+    //     dni: CI,
+    //   });
+    //   //  ! replace id 1
+    //   customer.type = await this.customerTypeRepository.findOneBy({ id: 18 });
+    //   await this.customerRepository.save(customer);
+    //   const dates = Object.entries(props)
+    //     .map(([key, value]) => ({ date: this.parseMonthYearToEndOfMonthDate(key), value }))
+    //     .sort((a, b) => {
+    //       if (a.date.getTime() !== b.date.getTime()) {
+    //         return a.date.getTime() - b.date.getTime();
+    //       }
+    //       return parseInt(`${a.value}`) - parseInt(`${b.value}`);
+    //     });
+    //   for (const [index, item] of dates.entries()) {
+    //     if (index === 0) {
+    //       await this.readingService.createReadingWithoutInvoice(
+    //         parseInt(`${item.value}`),
+    //         customer,
+    //         item.date.getFullYear(),
+    //         item.date.getMonth(),
+    //       );
+    //     } else {
+    //       await this.readingService.create({ customerId: customer.id, reading: parseInt(`${item.value}`) }, item.date);
+    //     }
+    //   }
+    // }
+    // console.log('done!');
     return { ok: true };
   }
 }
