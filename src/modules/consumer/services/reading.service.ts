@@ -23,18 +23,18 @@ export class ReadingService {
   ) {}
 
   // ! delete after upload data
-  async createReadingWithoutInvoice(reading: number, customer: Customer, year: number, month: number) {
-    const createdMeterReading = this.meterReadingRepository.create({
-      consumption: 0,
-      customer: customer,
-      reading: reading,
-      year: year,
-      month: month - 1,
-    });
-    await this.meterReadingRepository.save(createdMeterReading);
-  }
+  // async createReadingWithoutInvoice(reading: number, customer: Customer, year: number, month: number) {
+  //   const createdMeterReading = this.meterReadingRepository.create({
+  //     consumption: 0,
+  //     customer: customer,
+  //     reading: reading,
+  //     year: year,
+  //     month: month - 1,
+  //   });
+  //   await this.meterReadingRepository.save(createdMeterReading);
+  // }
 
-  async create({ customerId, reading }: CreateReadingDto, date = new Date()) {
+  async create({ customerId, reading, isNew }: CreateReadingDto, date = new Date()) {
     const customer = await this.customerRepository.findOne({
       where: { id: customerId },
       relations: { type: { preferences: true } },
@@ -45,12 +45,14 @@ export class ReadingService {
     try {
       await queryRunner.startTransaction();
       await this._checkDuplicate(customer.id, date, queryRunner);
-      const consumption = await this._calculateConsumption({
-        queryRunner: queryRunner,
-        customerId: customer.id,
-        date: date,
-        reading,
-      });
+      const consumption = isNew
+        ? 0
+        : await this._calculateConsumption({
+            queryRunner: queryRunner,
+            customerId: customer.id,
+            date: date,
+            reading,
+          });
       const createdMeterReading = queryRunner.manager.create(MeterReading, {
         consumption: consumption,
         customer: customer,
@@ -76,13 +78,22 @@ export class ReadingService {
     }
   }
 
-  async getLastReading(customerId: number): Promise<MeterReading | undefined> {
+  async getPreviusReading(customerId: number): Promise<MeterReading | undefined> {
     const date = new Date();
     const last = await this.meterReadingRepository.findOne({
       where: { customerId, year: date.getFullYear(), month: LessThan(date.getMonth() - 1) },
       order: { year: 'DESC', month: 'DESC' },
     });
     return last;
+  }
+
+  async getCurrentReading(customerId: number): Promise<MeterReading | undefined> {
+    const date = new Date();
+    const current = await this.meterReadingRepository.findOne({
+      where: { customerId, year: date.getFullYear(), month: date.getMonth() - 1 },
+      order: { year: 'DESC', month: 'DESC' },
+    });
+    return current;
   }
 
   async getReadingsByClient(customerId: number, { limit, offset }: PaginationParamsDto) {

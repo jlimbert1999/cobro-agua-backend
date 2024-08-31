@@ -85,6 +85,10 @@ export class AuthService {
               label: 'Estado de cuenta',
               routerLink: 'reports/customer-status',
             },
+            {
+              label: 'Pagos realizados',
+              routerLink: 'reports/payments-rage',
+            },
           ],
         },
       );

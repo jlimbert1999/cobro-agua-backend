@@ -1,3 +1,4 @@
+import { ReportsModule } from './modules/reports/reports.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -40,6 +41,7 @@ import { AdministrationModule } from './modules/administration/administration.mo
     AdministrationModule,
     ConsumerModule,
     PaymentModule,
+    ReportsModule,
   ],
 })
 export class AppModule {}

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryRunner, Repository } from 'typeorm';
+import { Between, QueryRunner, Repository } from 'typeorm';
 
 import { Payment } from './entities/payment.entity';
 import { Customer, Invoice } from 'src/modules/consumer/entities';
@@ -25,6 +25,15 @@ export class PaymentService {
       customer,
     });
     return await queryRunner.manager.save(createdPayment);
+  }
+
+  async getPaymentsByRange(startDate: Date, endDate: Date) {
+    return this.paymentRepository.find({
+      where: {
+        createdAt: Between(startDate, endDate),
+      },
+      relations: ['customer'], // Agrega las relaciones si las necesitas en el resultado
+    });
   }
 
   async histoty(customerId: string, { limit, offset }: PaginationParamsDto) {

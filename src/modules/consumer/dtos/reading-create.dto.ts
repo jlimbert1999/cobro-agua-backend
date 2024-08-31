@@ -1,4 +1,4 @@
-import { IsNumber, IsPositive } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsPositive } from 'class-validator';
 
 export class CreateReadingDto {
   @IsNumber()
@@ -7,4 +7,8 @@ export class CreateReadingDto {
 
   @IsNumber()
   reading: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isNew: boolean;
 }
