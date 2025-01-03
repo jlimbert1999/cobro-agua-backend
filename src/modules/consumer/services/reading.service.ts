@@ -25,19 +25,7 @@ export class ReadingService {
     private dataSource: DataSource,
   ) {}
 
-  // ! delete after upload data
-  // async createReadingWithoutInvoice(reading: number, customer: Customer, year: number, month: number) {
-  //   const createdMeterReading = this.meterReadingRepository.create({
-  //     consumption: 0,
-  //     customer: customer,
-  //     reading: reading,
-  //     year: year,
-  //     month: month - 1,
-  //   });
-  //   await this.meterReadingRepository.save(createdMeterReading);
-  // }
-
-  async create({ customerId, reading, isNew }: CreateReadingDto, date = new Date(2025, 1, 12)) {
+  async create({ customerId, reading, isNew }: CreateReadingDto, date = new Date()) {
     const customer = await this.customerRepository.findOne({
       where: { id: customerId },
       relations: { type: { preferences: true } },
@@ -47,9 +35,7 @@ export class ReadingService {
     await queryRunner.connect();
     try {
       await queryRunner.startTransaction();
-      const month = date.getMonth();
-      const adjustedYear = month === 0 ? date.getFullYear() - 1 : date.getFullYear();
-      const adjustedMonth = month === 0 ? 11 : month - 1;
+      const { adjustedYear, adjustedMonth } = this.adjustDate(date);
       await this._removeDuplicateReading({ customerId: customer.id, adjustedMonth, adjustedYear, queryRunner });
       const consumption = isNew
         ? 0
@@ -87,18 +73,20 @@ export class ReadingService {
   }
 
   async getPreviusReading(customerId: number): Promise<MeterReading | undefined> {
-    const { adjustedMonth, adjustedYear } = this.adjustDate(new Date(2025, 1, 12));
+    const { adjustedMonth, adjustedYear } = this.adjustDate(new Date());
+    const filterYear = adjustedMonth === 0 ? adjustedYear - 1 : adjustedYear;
+    const filterMonth = adjustedMonth === 0 ? 12 : adjustedMonth;
     const last = await this.meterReadingRepository.findOne({
-      where: { customerId, year: adjustedYear, month: LessThan(adjustedMonth) },
+      where: { customerId, year: filterYear, month: LessThan(filterMonth) },
       order: { year: 'DESC', month: 'DESC' },
     });
     return last;
   }
 
   async getCurrentReading(customerId: number): Promise<MeterReading | undefined> {
-    const date = new Date(2025, 1, 12);
+    const { adjustedMonth, adjustedYear } = this.adjustDate(new Date());
     const current = await this.meterReadingRepository.findOne({
-      where: { customerId, year: date.getFullYear(), month: date.getMonth() - 1 },
+      where: { customerId, year: adjustedYear, month: adjustedMonth },
       order: { year: 'DESC', month: 'DESC' },
     });
     return current;
@@ -141,11 +129,12 @@ export class ReadingService {
     adjustedYear,
     adjustedMonth,
   }: consumptionProps) {
+    const filterYear = adjustedMonth === 0 ? adjustedYear - 1 : adjustedYear;
+    const filterMonth = adjustedMonth === 0 ? 12 : adjustedMonth;
     const lastRecord = await queryRunner.manager.findOne(MeterReading, {
-      where: { customerId, year: adjustedYear, month: LessThan(adjustedMonth) },
+      where: { customerId, year: filterYear, month: LessThan(filterMonth) },
       order: { year: 'DESC', month: 'DESC' },
     });
-
     const consumption = lastRecord ? reading - lastRecord.reading : 0;
     if (consumption < 0) {
       throw new BadRequestException(`Lectura invalida. Actual: ${reading} < Anterior: ${lastRecord?.reading}`);
