@@ -2,7 +2,7 @@ import { Entity, Column, OneToMany, ManyToOne, PrimaryGeneratedColumn, CreateDat
 import { Invoice } from './invoice.entity';
 import { Payment } from 'src/modules/payment/entities/payment.entity';
 import { MeterReading } from './meter-reading.entity';
-import { CustomerType } from 'src/modules/administration/entities';
+import { CustomerType, Discount } from 'src/modules/administration/entities';
 
 export enum CustomerStatus {
   ENABLED = 'enabled',
@@ -53,4 +53,7 @@ export class Customer {
 
   @OneToMany(() => Payment, (payment) => payment.customer)
   payments: Payment[];
+
+  @ManyToOne(() => Discount, (discount) => discount.customers, { nullable: true })
+  discount?: Discount;
 }

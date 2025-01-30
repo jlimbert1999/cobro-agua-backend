@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, IsNull, QueryRunner, Repository } from 'typeorm';
 
 import { PaymentService } from 'src/modules/payment/payment.service';
-import { Preference } from 'src/modules/administration/entities';
 import { Customer, MeterReading, Invoice, InvoiceStatus } from '../entities';
 import { PaginationParamsDto } from 'src/common/dtos';
 import { PaymentDto } from '../dtos';
@@ -25,8 +24,7 @@ export class InvoiceService {
   ) {}
 
   async generateConsumptionInvoice({ queryRunner, customer, service, consumption }: invoiceConsumptionProps) {
-    const { preferences, minimumPrice } = customer.type;
-    const amount = this._calculateAmountToPay(consumption, preferences, minimumPrice);
+    const amount = this._calculateAmountToPay(consumption, customer);
     const createdInvoice = queryRunner.manager.create(Invoice, {
       customer: customer,
       service: service,
@@ -72,8 +70,9 @@ export class InvoiceService {
     return await this.paymentService.histoty(id_customer, paginatioParams);
   }
 
-  private _calculateAmountToPay(consumption: number, preferences: Preference[], minimumPrice: number) {
-    const sortedPreferences = preferences.slice().sort((a, b) => a.minUnits - b.minUnits);
+  private _calculateAmountToPay(consumption: number, customer: Customer) {
+    const { type, discount } = customer;
+    const sortedPreferences = type.preferences.slice().sort((a, b) => a.minUnits - b.minUnits);
     let total = 0;
     for (const range of sortedPreferences) {
       const rangeUnits = range.maxUnits - range.minUnits + (range.minUnits === 0 ? 0 : 1);
@@ -84,7 +83,11 @@ export class InvoiceService {
       total += rangeUnits * range.priceByUnit;
       consumption -= rangeUnits;
     }
-    return total > minimumPrice ? total : minimumPrice;
+    let amount = total > type.minimumPrice ? total : type.minimumPrice;
+    if (discount) {
+      amount = amount - amount * (discount.percentage / 100);
+    }
+    return amount;
   }
 
   private async _checkInvalidInvoiceToPay(invoiceIds: number[], customerId: number) {

@@ -28,7 +28,7 @@ export class ReadingService {
   async create({ customerId, reading, isNew }: CreateReadingDto, date = new Date()) {
     const customer = await this.customerRepository.findOne({
       where: { id: customerId },
-      relations: { type: { preferences: true } },
+      relations: { type: { preferences: true }, discount: true },
     });
     if (!customer) throw new BadRequestException(`Customer with ${customerId} dont exist`);
     const queryRunner = this.dataSource.createQueryRunner();
@@ -135,7 +135,7 @@ export class ReadingService {
       where: { customerId, year: filterYear, month: LessThan(filterMonth) },
       order: { year: 'DESC', month: 'DESC' },
     });
-    const consumption = lastRecord ? reading - lastRecord.reading : 0;
+    const consumption = lastRecord ? reading - lastRecord.reading : reading;
     if (consumption < 0) {
       throw new BadRequestException(`Lectura invalida. Actual: ${reading} < Anterior: ${lastRecord?.reading}`);
     }

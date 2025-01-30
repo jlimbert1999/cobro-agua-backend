@@ -26,11 +26,6 @@ export class ClientController {
     return this.clientService.update(+id, client);
   }
 
-  @Post('upload')
-  upload(@Body() data: any[]) {
-    return this.clientService.uploadData(data);
-  }
-
   @Get('types')
   searchTypesCustomers(@Query('term') term?: string) {
     return this.customerTypeService.searchAvailables(term);
