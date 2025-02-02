@@ -18,6 +18,7 @@ export class Invoice {
     type: 'decimal',
     precision: 10,
     scale: 2,
+    nullable: true,
     transformer: {
       to: (value: number) => value,
       from: (value: string) => parseFloat(value),
