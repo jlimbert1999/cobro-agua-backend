@@ -28,7 +28,6 @@ import { AdministrationModule } from './modules/administration/administration.mo
         username: configService.get('DATABASE_USER'),
         password: configService.get('DATABASE_PASSWORD'),
         autoLoadEntities: true,
-        synchronize: true,
       }),
       inject: [ConfigService],
     }),
