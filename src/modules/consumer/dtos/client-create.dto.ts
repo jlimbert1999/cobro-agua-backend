@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsNotEmpty, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateClientDto {
   @IsString()
@@ -27,4 +27,9 @@ export class CreateClientDto {
   @Type(() => Number)
   @IsInt()
   type: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @IsOptional()
+  discountId?: number;
 }

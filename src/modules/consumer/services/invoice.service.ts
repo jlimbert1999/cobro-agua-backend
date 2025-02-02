@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, IsNull, QueryRunner, Repository } from 'typeorm';
 
 import { PaymentService } from 'src/modules/payment/payment.service';
-import { Customer, MeterReading, Invoice, InvoiceStatus } from '../entities';
+import { Customer, MeterReading, Invoice, InvoiceStatus, DiscountDetails } from '../entities';
 import { PaginationParamsDto } from 'src/common/dtos';
 import { PaymentDto } from '../dtos';
 
@@ -14,31 +14,55 @@ interface invoiceConsumptionProps {
   consumption: number;
 }
 
+interface invoiceData {
+  customer: Customer;
+  service: MeterReading;
+  amount: number;
+  discountDetails?: DiscountDetails;
+}
+
 @Injectable()
 export class InvoiceService {
   constructor(
     @InjectRepository(Invoice) private invoiceRespository: Repository<Invoice>,
     @InjectRepository(Customer) private customerRespository: Repository<Customer>,
+    @InjectRepository(DiscountDetails) private discountDetailsRepository: Repository<DiscountDetails>,
     private paymentService: PaymentService,
     private dataSource: DataSource,
   ) {}
 
   async generateConsumptionInvoice({ queryRunner, customer, service, consumption }: invoiceConsumptionProps) {
-    const amount = this._calculateAmountToPay(consumption, customer);
-    const createdInvoice = queryRunner.manager.create(Invoice, {
-      customer: customer,
-      service: service,
-      amount: amount,
-    });
+    const { discount, type } = customer;
+    const consumptionAmount = this._calculateConsumptionAmount(consumption, customer);
+    const invoiceData: invoiceData = { customer, service, amount: 0 };
+    if (consumptionAmount > type.minimumPrice) {
+      if (discount) {
+        const discountAmount = consumptionAmount * (discount.percentage / 100);
+        invoiceData.discountDetails = queryRunner.manager.create(DiscountDetails, {
+          originalAmount: consumptionAmount,
+          name: discount.name,
+          percentage: discount.percentage,
+          amount: discountAmount,
+        });
+        invoiceData.amount = consumptionAmount - discountAmount;
+      } else {
+        invoiceData.amount = consumptionAmount;
+      }
+    } else {
+      invoiceData.amount = type.minimumPrice;
+    }
+    const createdInvoice = queryRunner.manager.create(Invoice, invoiceData);
     await queryRunner.manager.save(createdInvoice);
   }
 
   async getUnpaidInvoicesByCustomer(customerId: number) {
-    return await this.invoiceRespository.find({
+    const s = await this.invoiceRespository.find({
       where: { customerId: customerId, paymentId: IsNull() },
-      relations: { service: true },
+      relations: { service: true, discountDetails: true },
       order: { createdAt: 'DESC' },
     });
+    console.log(s);
+    return s;
   }
 
   async pay(customerId: number, { invoiceIds }: PaymentDto) {
@@ -70,8 +94,8 @@ export class InvoiceService {
     return await this.paymentService.histoty(id_customer, paginatioParams);
   }
 
-  private _calculateAmountToPay(consumption: number, customer: Customer) {
-    const { type, discount } = customer;
+  private _calculateConsumptionAmount(consumption: number, customer: Customer) {
+    const { type } = customer;
     const sortedPreferences = type.preferences.slice().sort((a, b) => a.minUnits - b.minUnits);
     let total = 0;
     for (const range of sortedPreferences) {
@@ -83,17 +107,13 @@ export class InvoiceService {
       total += rangeUnits * range.priceByUnit;
       consumption -= rangeUnits;
     }
-    let amount = total > type.minimumPrice ? total : type.minimumPrice;
-    if (discount) {
-      amount = amount - amount * (discount.percentage / 100);
-    }
-    return amount;
+    return total;
   }
 
   private async _checkInvalidInvoiceToPay(invoiceIds: number[], customerId: number) {
     const invoicesToPay = await this.invoiceRespository.find({
       where: { id: In(invoiceIds), customerId: customerId },
-      relations: { service: true },
+      relations: { service: true, discountDetails: true },
     });
     const invalidInvoice = invoicesToPay.find(({ status, paymentId }) => status === InvoiceStatus.PAID || paymentId);
     if (invalidInvoice) throw new BadRequestException(`La factura Nro. ${invalidInvoice.id} ya ha sido cancelada`);

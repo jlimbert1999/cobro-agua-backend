@@ -68,6 +68,11 @@ export class AuthService {
           icon: 'pi pi-fw pi-cog',
           routerLink: 'administration/customer-types',
         },
+        {
+          label: 'Descuentos',
+          icon: 'pi pi-fw pi-angle-double-down',
+          routerLink: 'administration/discounts',
+        },
       );
     }
     if (roles.includes(UserRole.OFFICER)) {

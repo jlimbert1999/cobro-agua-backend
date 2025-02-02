@@ -2,6 +2,7 @@ import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, Prim
 import { Customer } from './customer.entity';
 import { Payment } from 'src/modules/payment/entities/payment.entity';
 import { MeterReading } from './meter-reading.entity';
+import { DiscountDetails } from './discount-details.entity';
 
 export enum InvoiceStatus {
   UNPAID = 'unpaid',
@@ -13,7 +14,15 @@ export class Invoice {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'float' })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value),
+    },
+  })
   amount: number;
 
   @CreateDateColumn({ type: 'timestamptz' })
@@ -31,6 +40,9 @@ export class Invoice {
 
   @ManyToOne(() => Payment, (payment) => payment.invoices)
   payment: Payment;
+
+  @OneToOne(() => DiscountDetails, (discountDetails) => discountDetails.invoice, { cascade: true })
+  discountDetails: DiscountDetails;
 
   @Column({ nullable: true })
   customerId: number;

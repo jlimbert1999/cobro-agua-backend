@@ -9,7 +9,15 @@ export class Discount {
   @Column()
   name: string;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2 })
+  @Column({
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value),
+    },
+  })
   percentage: number;
 
   @OneToMany(() => Customer, (customer) => customer.discount)

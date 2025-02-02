@@ -2,13 +2,14 @@ import { Controller, Post, Body, Patch, Get, Param, Query } from '@nestjs/common
 import { CustomerService } from '../services';
 import { CreateClientDto, FilterCustomerDto, UpdateClientDto } from '../dtos';
 import { PaginationParamsDto } from 'src/common/dtos';
-import { CustomerTypeService } from 'src/modules/administration/services';
+import { CustomerTypeService, DiscountService } from 'src/modules/administration/services';
 
 @Controller('clients')
 export class ClientController {
   constructor(
     private clientService: CustomerService,
     private customerTypeService: CustomerTypeService,
+    private discountService: DiscountService,
   ) {}
 
   @Post('filter')
@@ -29,6 +30,11 @@ export class ClientController {
   @Get('types')
   searchTypesCustomers(@Query('term') term?: string) {
     return this.customerTypeService.searchAvailables(term);
+  }
+
+  @Get('discounts')
+  getDiscounts() {
+    return this.discountService.getEnabled();
   }
 
   @Get('meter/:term')

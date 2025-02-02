@@ -6,12 +6,12 @@ import { PaymentModule } from 'src/modules/payment/payment.module';
 
 import { CustomerService, InvoiceService, ReadingService, TaskService } from './services';
 import { ClientController, ReadingController, PaymentController } from './controllers';
-import { Customer, Invoice, MeterReading } from './entities';
+import { Customer, DiscountDetails, Invoice, MeterReading } from './entities';
 
 @Module({
   controllers: [ClientController, ReadingController, PaymentController],
   providers: [CustomerService, ReadingService, InvoiceService, TaskService],
-  imports: [TypeOrmModule.forFeature([Customer, Invoice, MeterReading]), AdministrationModule, PaymentModule],
+  imports: [TypeOrmModule.forFeature([Customer, Invoice, MeterReading, DiscountDetails]), AdministrationModule, PaymentModule],
   exports: [TypeOrmModule],
 })
 export class ConsumerModule {}

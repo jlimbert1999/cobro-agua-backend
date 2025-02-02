@@ -6,12 +6,13 @@ import { CreateClientDto, FilterCustomerDto, UpdateClientDto } from '../dtos';
 import { PaginationParamsDto } from 'src/common/dtos';
 import { Customer } from '../entities';
 import { ReadingService } from './reading.service';
-import { CustomerType } from 'src/modules/administration/entities';
+import { CustomerType, Discount } from 'src/modules/administration/entities';
 @Injectable()
 export class CustomerService {
   constructor(
     @InjectRepository(Customer) private customerRepository: Repository<Customer>,
     @InjectRepository(CustomerType) private customerTypeRepository: Repository<CustomerType>,
+    @InjectRepository(Discount) private discountRepository: Repository<Discount>,
     private readingService: ReadingService,
   ) {}
 
@@ -22,20 +23,23 @@ export class CustomerService {
   }
 
   async create(customer: CreateClientDto) {
+    const { discountId, ...props } = customer;
     await this._chechDuplicanteDni(customer.dni);
     const type = await this.customerTypeRepository.findOneBy({ id: customer.type });
-    const createdCustomer = this.customerRepository.create({ ...customer, type });
+    const discount = discountId ? await this.discountRepository.findOneBy({ id: customer.discountId }) : null;
+    const createdCustomer = this.customerRepository.create({ ...props, type, discount });
     return await this.customerRepository.save(createdCustomer);
   }
 
   async update(id: number, clientDto: UpdateClientDto) {
-    const { type, ...toUpdate } = clientDto;
+    const { type, discountId, ...toUpdate } = clientDto;
     const clientDB = await this.customerRepository.findOne({ where: { id }, relations: { type: true } });
     if (!clientDB) throw new NotFoundException(`Customer with ${id} dont exist`);
     if (clientDB.dni !== clientDto.dni) await this._chechDuplicanteDni(clientDto.dni);
     if (type !== clientDB.type.id) {
       clientDB.type = await this.customerTypeRepository.findOneBy({ id: type });
     }
+    clientDB.discount = discountId ? await this.discountRepository.findOneBy({ id: discountId }) : null;
     return await this.customerRepository.save({ ...clientDB, ...toUpdate });
   }
 
@@ -68,18 +72,18 @@ export class CustomerService {
     }
     return query
       .leftJoinAndSelect('customer.type', 'type')
+      .leftJoinAndSelect('customer.discount', 'discount')
       .orderBy('customer.createdAt', 'DESC')
       .skip(params.offset)
       .take(params.limit);
   }
 
   async searchByMeterNumber(term: string) {
-    const s = await this.customerRepository.find({
+    return await this.customerRepository.find({
       where: [{ meterNumber: term }, { firstname: ILike(`%${term}%`) }],
-      relations: { type: true },
+      relations: { type: true, discount: true },
       take: 5,
     });
-    return s;
   }
 
   parseMonthYearToEndOfMonthDate(monthYear: string): Date {

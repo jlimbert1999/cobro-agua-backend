@@ -45,7 +45,7 @@ export class Customer {
   @OneToMany(() => MeterReading, (reading) => reading.customer, { cascade: true, onDelete: 'CASCADE' })
   readings: MeterReading[];
 
-  @ManyToOne(() => CustomerType, (customerType) => customerType.customers)
+  @ManyToOne(() => CustomerType, (customerType) => customerType.customers, { eager: true })
   type: CustomerType;
 
   @OneToMany(() => Invoice, (invoice) => invoice.customer, { cascade: true, onDelete: 'CASCADE' })
@@ -55,5 +55,5 @@ export class Customer {
   payments: Payment[];
 
   @ManyToOne(() => Discount, (discount) => discount.customers, { nullable: true })
-  discount?: Discount;
+  discount?: Discount ;
 }
