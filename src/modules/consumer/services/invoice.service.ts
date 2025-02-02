@@ -56,13 +56,11 @@ export class InvoiceService {
   }
 
   async getUnpaidInvoicesByCustomer(customerId: number) {
-    const s = await this.invoiceRespository.find({
+    return await this.invoiceRespository.find({
       where: { customerId: customerId, paymentId: IsNull() },
       relations: { service: true, discountDetails: true },
       order: { createdAt: 'DESC' },
     });
-    console.log(s);
-    return s;
   }
 
   async pay(customerId: number, { invoiceIds }: PaymentDto) {
